@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RPG Emojis 8.0: Montarias & Lendas</title>
+<title>RPG Emojis 9.0: Arsenal de Classes</title>
 
 <style>
   :root{
@@ -55,7 +55,7 @@
   .stat-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed rgba(255,255,255,0.1); }
   .stat-val { font-family:monospace; font-size:14px; color:#fff; }
   .stat-btn { background:var(--xp); color:#fff; border:none; width:24px; height:24px; border-radius:4px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; }
-  .mount-badge { background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:6px; font-size:12px; margin-top:10px; display:flex; align-items:center; gap:6px; border:1px solid #555; }
+  .mount-badge { background:rgba(255,255,255,0.1); padding:8px; border-radius:8px; font-size:13px; margin-top:10px; display:flex; align-items:center; gap:10px; border:1px solid var(--gold); }
 
   /* Tela de Jogo */
   .screen { height:280px; background:rgba(0,0,0,0.4); border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-direction:column; position:relative; overflow:hidden; backdrop-filter:blur(2px); }
@@ -100,7 +100,7 @@
   .card-item:hover { border-color:var(--accent); background:rgba(255,255,255,0.1); transform:translateX(5px); }
   
   .tab-menu { display:flex; gap:10px; margin-bottom:10px; }
-  .tab-btn { flex:1; padding:8px; background:#111; border:1px solid #444; color:#888; cursor:pointer; }
+  .tab-btn { flex:1; padding:8px; background:#111; border:1px solid #444; color:#888; cursor:pointer; text-align:center; border-radius:6px; }
   .tab-btn.active { background:var(--accent); color:#000; border-color:var(--accent); font-weight:bold; }
 </style>
 </head>
@@ -108,7 +108,7 @@
 
 <div id="app">
   <div class="header">
-    <div class="row"><span style="font-size:32px">🐉</span> <div style="line-height:1.1"><b>Montarias & Lendas</b><br><small style="color:var(--gold); letter-spacing:1px; font-size:11px">RPG 8.0</small></div></div>
+    <div class="row"><span style="font-size:32px">⚔️</span> <div style="line-height:1.1"><b>Arsenal de Classes</b><br><small style="color:var(--gold); letter-spacing:1px; font-size:11px">RPG 9.0</small></div></div>
     <div class="row">
       <button class="btn" onclick="UI.openModal('inv')">🎒 Inv</button>
       <button class="btn" onclick="UI.openModal('map')">🗺️ Mapa</button>
@@ -149,13 +149,23 @@
         <div class="row"><b id="val-agi" class="stat-val">0</b> <button class="stat-btn hidden" onclick="Core.addStat('agi')">+</button></div>
       </div>
       <div class="stat-row">
-        <span title="Magia e Mana">🧠 Inteligência</span>
+        <span title="Dano Mágico e Mana">🧠 Inteligência</span>
         <div class="row"><b id="val-int" class="stat-val">0</b> <button class="stat-btn hidden" onclick="Core.addStat('int')">+</button></div>
       </div>
       
       <div id="ui-mount" class="mount-badge hidden">
-        <span style="font-size:18px">🐎</span> 
-        <div><b style="color:var(--gold)">Cavalo</b><br><small style="color:#aaa">+2 AGI</small></div>
+        <span id="mnt-icon" style="font-size:22px"></span> 
+        <div><b id="mnt-name" style="color:var(--gold)"></b><br><small id="mnt-desc" style="color:#aaa"></small></div>
+      </div>
+      
+      <div class="title" style="margin-top:24px">Equipamento</div>
+      <div class="row between card-item" style="padding:8px; cursor:default; hover:none">
+        <span class="row">🗡️ <span id="ui-wpn-name" style="font-size:13px">...</span></span>
+        <b id="ui-wpn-dmg" style="font-size:12px; color:#aaa">0-0</b>
+      </div>
+      <div class="row between card-item" style="padding:8px; cursor:default">
+        <span class="row">🛡️ <span id="ui-arm-name" style="font-size:13px">...</span></span>
+        <b id="ui-arm-def" style="font-size:12px; color:#aaa">+0</b>
       </div>
 
     </div>
@@ -213,7 +223,6 @@
 </div>
 
 <script>
-// --- BANCO DE DADOS ---
 const DB = {
   classes: {
     warrior: { name:'Guerreiro', e:'⚔️', hp:150, mp:20, str:4, agi:1, int:1, desc:'Forte e Resistente.' },
@@ -245,6 +254,28 @@ const DB = {
     shadow: { name:'Sombra',    e:'👤', hp:350, agi:15,atk:60, xp:600, gold:250 },
     voidking:{name:'Rei Vazio', e:'👑', hp:1000,agi:8, atk:95, xp:5000,gold:5000, boss:true }
   },
+  items: {
+    pot:  { name:'Poção P.', e:'🧪', val:25, effect:p=>p.hp=Math.min(p.maxHp, p.hp+60), desc:'+60 HP' },
+    mega: { name:'Mega Poção',e:'🍷', val:100, effect:p=>p.hp=Math.min(p.maxHp, p.hp+150), desc:'+150 HP' },
+    elixir:{ name:'Elixir',   e:'🌟', val:300, effect:p=>{p.hp=p.maxHp;p.mp=p.maxMp}, desc:'FULL HP/MP' },
+    ether:{ name:'Éter Mana', e:'🔷', val:25, effect:p=>p.mp=Math.min(p.maxMp, p.mp+40), desc:'+40 MP' },
+    bomb: { name:'Bomba',     e:'💣', val:50, dmg:50, desc:'50 Dano Fixo' }
+  },
+  // SISTEMA DE GEAR POR CLASSE
+  gear: {
+    weapons: {
+      warrior: [{n:'Punhos',v:1,x:3},{n:'Espada Ferruja',v:5,x:8,c:100},{n:'Espada Ferro',v:10,x:15,c:350},{n:'Montante',v:15,x:25,c:900},{n:'Matadora',v:25,x:40,c:2500},{n:'Excalibur',v:50,x:70,c:8000}],
+      rogue:   [{n:'Punhos',v:1,x:3},{n:'Adaga Cega',v:4,x:7,c:100},{n:'Adaga Dupla',v:8,x:14,c:350},{n:'Lâmina Sombra',v:12,x:22,c:900},{n:'Presa Veneno',v:20,x:35,c:2500},{n:'Fim dos Dias',v:45,x:65,c:8000}],
+      mage:    [{n:'Mãos',v:1,x:3},{n:'Varinha Pau',v:4,x:8,c:100},{n:'Cajado Aprendiz',v:8,x:14,c:350},{n:'Cajado Rúnico',v:14,x:24,c:900},{n:'Cetro Vazio',v:22,x:38,c:2500},{n:'Cosmos',v:48,x:68,c:8000}],
+      paladin: [{n:'Punhos',v:1,x:3},{n:'Maça Madeira',v:4,x:7,c:100},{n:'Martelo Ferro',v:9,x:14,c:350},{n:'Mangual',v:13,x:23,c:900},{n:'Martelo Luz',v:23,x:38,c:2500},{n:'Mjolnir',v:48,x:68,c:8000}]
+    },
+    armors: {
+      warrior: [{n:'Camisa',v:0},{n:'Couro Batido',v:3,c:100},{n:'Cota Malha',v:7,c:350},{n:'Peitoral Aço',v:14,c:900},{n:'Placas Dragão',v:22,c:2500},{n:'Armadura Deus',v:35,c:8000}],
+      rogue:   [{n:'Camisa',v:0},{n:'Capa Viagem',v:2,c:100},{n:'Couro Fino',v:6,c:350},{n:'Manto Sombra',v:12,c:900},{n:'Traje Ninja',v:20,c:2500},{n:'Vulto',v:32,c:8000}],
+      mage:    [{n:'Camisa',v:0},{n:'Túnica Velha',v:1,c:100},{n:'Robe Aprendiz',v:5,c:350},{n:'Manto Arcano',v:10,c:900},{n:'Toga Estelar',v:18,c:2500},{n:'Tecido Tempo',v:30,c:8000}],
+      paladin: [{n:'Camisa',v:0},{n:'Gibão',v:3,c:100},{n:'Escudo Torre',v:8,c:350},{n:'Armadura Bento',v:15,c:900},{n:'Placas Luz',v:24,c:2500},{n:'Égide',v:38,c:8000}]
+    }
+  },
   quests: [
     { id:'q1', target:'rat', count:5, title:'Praga de Ratos', reward_g:100, reward_xp:100 },
     { id:'q2', target:'wolf', count:10, title:'Peles de Lobo', reward_g:200, reward_xp:250 },
@@ -253,35 +284,18 @@ const DB = {
     { id:'q5', target:'golem', count:5, title:'Núcleos de Magma', reward_g:2000, reward_xp:2500 },
     { id:'q6', target:'dragon', count:1, title:'O Dragão Ancião', reward_g:5000, reward_xp:5000 }
   ],
-  items: {
-    pot:  { name:'Poção P.', e:'🧪', val:25, effect:p=>p.hp=Math.min(p.maxHp, p.hp+60), desc:'+60 HP' },
-    mega: { name:'Mega Poção',e:'🍷', val:100, effect:p=>p.hp=Math.min(p.maxHp, p.hp+150), desc:'+150 HP' },
-    elixir:{ name:'Elixir',   e:'🌟', val:300, effect:p=>{p.hp=p.maxHp;p.mp=p.maxMp}, desc:'FULL HP/MP' },
-    ether:{ name:'Éter Mana', e:'🔷', val:25, effect:p=>p.mp=Math.min(p.maxMp, p.mp+40), desc:'+40 MP' },
-    bomb: { name:'Bomba',     e:'💣', val:50, dmg:50, desc:'50 Dano Fixo' }
-  },
-  weapons: [
-    { name:'Punhos', min:1, max:3 }, { name:'Adaga', min:4, max:8, cost:100 }, 
-    { name:'Espada', min:8, max:14, cost:350 }, { name:'Machado', min:12, max:24, cost:900 },
-    { name:'Lâmina Mitril', min:20, max:35, cost:2500 }, { name:'Lâmina Vazio', min:30, max:50, cost:6000 },
-    { name:'Deus da Guerra', min:50, max:80, cost:15000 }
-  ],
-  armors: [
-    { name:'Roupa', def:0 }, { name:'Couro', def:3, cost:100 }, 
-    { name:'Malha', def:7, cost:350 }, { name:'Placas', def:14, cost:900 },
-    { name:'Dracônica', def:22, cost:2500 }, { name:'Divina', def:35, cost:8000 }
-  ],
   skills: {
     bash: { name:'Golpe', cost:5, bonus:5, dice:8 },
     stab: { name:'Furar', cost:5, bonus:3, dice:10 },
     fire: { name:'Fogo',  cost:10, bonus:8, dice:20 },
     heal: { name:'Cura',  cost:12, val:50, type:'heal' }
   },
+  // MONTARIAS BALANCEADAS
   mounts: {
-    horse: { name:'Cavalo', e:'🐎', cost:500, agi:2, str:0, desc:'+2 AGI' },
-    wolf:  { name:'Lobo',   e:'🐺', cost:1500, agi:2, str:2, desc:'+2 AGI, +2 FOR' },
-    griff: { name:'Grifo',  e:'🦅', cost:4000, agi:5, str:2, desc:'+5 AGI, +2 FOR' },
-    dragon:{ name:'Dragão', e:'🐉', cost:10000, agi:5, str:5, desc:'+5 AGI, +5 FOR' }
+    horse: { name:'Cavalo', e:'🐎', cost:200, agi:2, str:0, desc:'+2 AGI (Barato e rápido)' },
+    wolf:  { name:'Warg',   e:'🐺', cost:600, agi:3, str:2, desc:'+3 AGI, +2 FOR (Agressivo)' },
+    griff: { name:'Grifo',  e:'🦅', cost:1500, agi:5, str:3, int:3, desc:'+5 AGI, +3 FOR/INT' },
+    dragon:{ name:'Draco',  e:'🐉', cost:5000, agi:8, str:8, int:5, desc:'+8 AGI/FOR, +5 INT' }
   }
 };
 
@@ -297,15 +311,24 @@ const Dice = {
   roll: (min, max) => Math.floor(Math.random()*(max-min+1))+min
 };
 
-// Pega atributos totais (Base + Montaria)
 const getStats = () => {
   const p = State.p;
   let s = { str:p.str, agi:p.agi, int:p.int };
   if(p.mount && DB.mounts[p.mount]) {
     const m = DB.mounts[p.mount];
-    s.str += m.str; s.agi += m.agi;
+    s.str += (m.str||0); s.agi += (m.agi||0); s.int += (m.int||0);
   }
   return s;
+};
+
+// Pega item atual baseado na classe
+const getGear = () => {
+  const p = State.p;
+  // Fallback para warrior se der erro, mas não deve dar
+  const c = p.class || 'warrior';
+  const w = DB.gear.weapons[c][p.wpn] || DB.gear.weapons[c][0];
+  const a = DB.gear.armors[c][p.arm] || DB.gear.armors[c][0];
+  return { w, a };
 };
 
 const UI = {
@@ -313,24 +336,31 @@ const UI = {
     const p = State.p;
     const c = DB.classes[p.class];
     const stats = getStats();
+    const g = getGear();
     
     document.getElementById('ui-lvl').innerText = p.lvl;
     document.getElementById('ui-gold').innerText = p.gold;
     document.getElementById('ui-class').innerText = c ? c.name : '';
     
-    // Stats
     document.getElementById('val-str').innerText = stats.str;
     document.getElementById('val-agi').innerText = stats.agi;
     document.getElementById('val-int').innerText = stats.int;
     
-    // Mount Badge
+    // Mount
     const mBadge = document.getElementById('ui-mount');
-    if(p.mount) {
+    const mIcon = document.getElementById('mnt-icon');
+    const mName = document.getElementById('mnt-name');
+    const mDesc = document.getElementById('mnt-desc');
+    
+    if(p.mount && DB.mounts[p.mount]) {
       const m = DB.mounts[p.mount];
-      mBadge.innerHTML = `<span style="font-size:24px">${m.e}</span> <div><b style="color:var(--gold)">${m.name}</b><br><small style="color:#aaa">${m.desc}</small></div>`;
+      mIcon.innerText = m.e;
+      mName.innerText = m.name;
+      mDesc.innerText = m.desc;
       mBadge.classList.remove('hidden');
     } else mBadge.classList.add('hidden');
     
+    // Points
     const ptsBtn = document.querySelectorAll('.stat-btn');
     const ptsBadge = document.getElementById('ui-points');
     if(p.points > 0) {
@@ -342,6 +372,7 @@ const UI = {
       ptsBtn.forEach(b => b.classList.add('hidden'));
     }
 
+    // Bars
     const setBar = (id, cur, max) => {
       document.getElementById(`ui-${id}-txt`).innerText = `${Math.floor(cur)}/${max}`;
       document.getElementById(`bar-${id}`).style.width = Math.min(100, (cur/max)*100) + '%';
@@ -350,6 +381,13 @@ const UI = {
     setBar('mp', p.mp, p.maxMp);
     setBar('xp', p.xp, p.lvl*150);
 
+    // Gear UI
+    document.getElementById('ui-wpn-name').innerText = g.w.n;
+    document.getElementById('ui-wpn-dmg').innerText = `${g.w.v}-${g.w.x} dmg`;
+    document.getElementById('ui-arm-name').innerText = g.a.n;
+    document.getElementById('ui-arm-def').innerText = `+${g.a.v} def`;
+
+    // Combat HUD
     const hud = document.getElementById('enemy-hud');
     if(State.combat) {
       hud.style.opacity = '1';
@@ -358,6 +396,7 @@ const UI = {
       document.getElementById('enemy-hp-bar').style.width = pct + '%';
     } else hud.style.opacity = '0';
 
+    // Quests
     const qBox = document.getElementById('ui-quests');
     qBox.innerHTML = '';
     DB.quests.forEach(q => {
@@ -414,7 +453,7 @@ const UI = {
           overlay.style.display = 'none';
           pDie.classList.remove('winner','loser'); eDie.classList.remove('winner','loser');
           callback();
-        }, 1000);
+        }, 800);
       }
     }, 60);
   },
@@ -429,7 +468,7 @@ const UI = {
     setTimeout(()=>el.remove(), 1000);
   },
 
-  setScreen: (emoji, bg) => {
+  setScreen: (emoji) => {
     document.getElementById('ui-main-emoji').innerText = emoji;
   },
   
@@ -488,18 +527,18 @@ const UI = {
 
 const Core = {
   init: () => {
-    const s = localStorage.getItem('rpg_v8_legends');
+    const s = localStorage.getItem('rpg_v9_classgear');
     if(s) { State = JSON.parse(s); Core.travel(State.loc); UI.log('Jogo carregado.'); } 
     else { UI.openModal('class'); }
     UI.render();
   },
-  save: () => { localStorage.setItem('rpg_v8_legends', JSON.stringify(State)); UI.render(); },
-  resetGame: () => { if(confirm('Apagar tudo?')){ localStorage.removeItem('rpg_v8_legends'); location.reload(); } },
+  save: () => { localStorage.setItem('rpg_v9_classgear', JSON.stringify(State)); UI.render(); },
+  resetGame: () => { if(confirm('Apagar tudo?')){ localStorage.removeItem('rpg_v9_classgear'); location.reload(); } },
 
   setClass: (k) => {
     const c = DB.classes[k];
     State.p.class = k;
-    Object.assign(State.p, { maxHp:c.hp, hp:c.hp, maxMp:c.mp, mp:c.mp, str:c.str, agi:c.agi, int:c.int, mount:null });
+    Object.assign(State.p, { maxHp:c.hp, hp:c.hp, maxMp:c.mp, mp:c.mp, str:c.str, agi:c.agi, int:c.int, mount:null, wpn:0, arm:0 });
     State.p.inv = { pot:3 };
     UI.closeModal(); Core.travel('town');
   },
@@ -607,12 +646,15 @@ const Core = {
   resolveDuel: (pRoll, eRoll, type, skKey) => {
     const p = State.p;
     const e = State.combat.e;
-    const w = DB.weapons[p.wpn];
+    const gear = getGear();
     const stats = getStats();
     
     if(pRoll >= eRoll) {
       if(type === 'atk') {
-        let dmg = Dice.roll(w.min, w.max) + stats.str + Math.floor(p.lvl/2);
+        // Dano = Weapon + (Mage usa INT, outros usam STR)
+        let attr = p.class === 'mage' ? stats.int : stats.str;
+        let dmg = Dice.roll(gear.w.v, gear.w.x) + attr + Math.floor(p.lvl/2);
+        
         if(pRoll >= 20) { dmg = Math.floor(dmg*1.5); UI.fxFloat('CRIT!','crit'); }
         e.hp -= dmg;
         UI.log(`Causou <b>${dmg}</b> dano.`);
@@ -634,7 +676,7 @@ const Core = {
       }
     } else {
       UI.log(`❌ Inimigo venceu o duelo!`, 'color:var(--hp)');
-      const armor = DB.armors[p.arm].def;
+      const armor = gear.a.v;
       let dmg = Math.max(0, (e.atk + Dice.roll(-2, 2)) - armor);
       p.hp -= dmg;
       if(dmg > 0) {
@@ -730,13 +772,13 @@ const Core = {
   },
 
   renderShopTab: (tab) => {
-    // Highlight tabs
     document.querySelectorAll('.tab-btn').forEach(b => {
       b.classList.toggle('active', b.innerText.toLowerCase().includes(tab==='gear'?'equip':tab));
     });
 
     const body = document.getElementById('shop-body');
     body.innerHTML = '';
+    const p = State.p;
     
     if(tab === 'items') {
       for(let k in DB.items) {
@@ -745,18 +787,19 @@ const Core = {
       }
     }
     else if(tab === 'gear') {
-      const nw = DB.weapons[State.p.wpn+1];
-      if(nw) body.innerHTML += `<div class="card-item" onclick="Core.buy('wpn')"><span>⚔️ ${nw.name} (${nw.min}-${nw.max})</span> <b>${nw.cost}🪙</b></div>`;
+      const c = p.class;
+      const nw = DB.gear.weapons[c][p.wpn+1];
+      if(nw) body.innerHTML += `<div class="card-item" onclick="Core.buy('wpn')"><span>⚔️ ${nw.n} (${nw.v}-${nw.x})</span> <b>${nw.c}🪙</b></div>`;
       else body.innerHTML += `<div class="card-item"><span>⚔️ Arma Máxima!</span></div>`;
       
-      const na = DB.armors[State.p.arm+1];
-      if(na) body.innerHTML += `<div class="card-item" onclick="Core.buy('arm')"><span>🛡️ ${na.name} (+${na.def})</span> <b>${na.cost}🪙</b></div>`;
+      const na = DB.gear.armors[c][p.arm+1];
+      if(na) body.innerHTML += `<div class="card-item" onclick="Core.buy('arm')"><span>🛡️ ${na.n} (+${na.v})</span> <b>${na.c}🪙</b></div>`;
       else body.innerHTML += `<div class="card-item"><span>🛡️ Armadura Máxima!</span></div>`;
     }
     else if(tab === 'mounts') {
       for(let k in DB.mounts) {
         const m = DB.mounts[k];
-        const owned = State.p.mount === k;
+        const owned = p.mount === k;
         body.innerHTML += `<div class="card-item" style="${owned?'border:1px solid var(--gold)':''}" onclick="Core.buy('mount','${k}')">
           <div class="row"><span style="font-size:24px">${m.e}</span> <div><b>${m.name}</b><br><small>${m.desc}</small></div></div>
           ${owned ? '<b>✅</b>' : `<b>${m.cost}🪙</b>`}
@@ -777,10 +820,20 @@ const Core = {
       if(p.gold >= m.cost) { p.gold-=m.cost; p.mount=k; UI.log(`Comprou ${m.name}!`); Core.renderShopTab('mounts'); }
     }
     else {
-      const list = type==='wpn'?DB.weapons:DB.armors;
-      const idx = type==='wpn'?p.wpn:p.arm;
+      // Gear System 2.0
+      const c = p.class;
+      const list = type==='wpn' ? DB.gear.weapons[c] : DB.gear.armors[c];
+      const idx = type==='wpn' ? p.wpn : p.arm;
       const it = list[idx+1];
-      if(it && p.gold >= it.cost) { p.gold-=it.cost; if(type==='wpn') p.wpn++; else p.arm++; UI.log('Upgrade comprado!'); Core.renderShopTab('gear'); }
+      
+      if(it && p.gold >= it.c) {
+        p.gold -= it.c;
+        if(type==='wpn') p.wpn++; else p.arm++;
+        UI.log('Upgrade comprado!');
+        Core.renderShopTab('gear');
+      } else {
+        UI.log('Ouro insuficiente.');
+      }
     }
     Core.save();
   }
