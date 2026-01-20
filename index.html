@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RPG Emojis: Dados & Caos 6.0</title>
+<title>RPG Emojis 7.0: Stats & Rewards</title>
 
 <style>
   :root{
@@ -15,7 +15,7 @@
   *{box-sizing:border-box}
   body{ margin:0; background:var(--bg); color:var(--text); font:14px/1.5 system-ui,sans-serif; user-select:none; transition: background 0.8s ease; }
   
-  /* Temas de Mapa */
+  /* Temas */
   body.theme-town { background: linear-gradient(to bottom, #1e293b, #0f172a); }
   body.theme-forest { background: linear-gradient(to bottom, #14532d, #052e16); }
   body.theme-cave { background: linear-gradient(to bottom, #3f2e3e, #1a1a1a); }
@@ -34,6 +34,7 @@
   .btn:active:not(:disabled) { transform:translateY(0); }
   .btn:disabled { opacity:0.5; cursor:not-allowed; filter:grayscale(1); }
   .btn-big { width:100%; padding:16px; font-size:16px; margin-top:6px; }
+  .btn-sm { padding:2px 8px; font-size:12px; height:24px; }
   
   /* Layout */
   .header { display:flex; justify-content:space-between; align-items:center; padding:0 4px; margin-bottom:10px; }
@@ -50,33 +51,31 @@
   .c-mp { background:linear-gradient(90deg, #1e40af, #60a5fa); } 
   .c-xp { background:linear-gradient(90deg, #166534, #22c55e); }
 
+  /* Stats Box */
+  .stat-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed rgba(255,255,255,0.1); }
+  .stat-val { font-family:monospace; font-size:14px; color:#fff; }
+  .stat-btn { background:var(--xp); color:#fff; border:none; width:24px; height:24px; border-radius:4px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; }
+  .stat-btn:hover { transform:scale(1.1); }
+
   /* Tela de Jogo */
   .screen { height:280px; background:rgba(0,0,0,0.4); border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-direction:column; position:relative; overflow:hidden; backdrop-filter:blur(2px); }
   .main-emoji { font-size:100px; z-index:2; filter:drop-shadow(0 10px 30px rgba(0,0,0,0.7)); transition:transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position:relative; }
-  .bg-emoji { position:absolute; font-size:240px; opacity:0.06; z-index:1; animation: pulseBg 8s infinite alternate; }
-  @keyframes pulseBg { from{transform:scale(1) rotate(-5deg)} to{transform:scale(1.1) rotate(5deg)} }
-
-  /* Barra de Vida Inimigo */
+  
+  /* Barra Inimigo */
   .enemy-stats { width:140px; margin-top:10px; z-index:5; text-align:center; transition:opacity 0.3s; opacity:0; }
   .enemy-bar-bg { height:8px; background:#000; border-radius:4px; overflow:hidden; border:1px solid #555; }
   .enemy-bar-fill { height:100%; background:#ef4444; width:100%; transition:width 0.2s; }
-  .enemy-hp-text { font-size:11px; font-weight:bold; color:#fff; text-shadow:0 1px 2px #000; margin-top:2px; }
 
-  /* DUELO DE DADOS */
+  /* DUELO */
   #dice-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.85); z-index:20; display:none; flex-direction:column; align-items:center; justify-content:center; border-radius:12px; backdrop-filter:blur(5px); }
   .dice-arena { display:flex; align-items:center; gap:30px; }
   .dice-col { display:flex; flex-direction:column; align-items:center; gap:5px; }
-  .dice-label { font-size:12px; font-weight:bold; text-transform:uppercase; letter-spacing:1px; }
-  .dice-val { font-size:60px; font-weight:900; width:80px; height:80px; display:flex; align-items:center; justify-content:center; background:#1e293b; border-radius:12px; border:2px solid #555; box-shadow:0 10px 20px rgba(0,0,0,0.5); }
-  .dice-vs { font-size:24px; color:#aaa; font-style:italic; }
-  
+  .dice-val { font-size:60px; font-weight:900; width:80px; height:80px; display:flex; align-items:center; justify-content:center; background:#1e293b; border-radius:12px; border:2px solid #555; }
   .d-player { color:var(--accent); border-color:var(--accent); }
   .d-enemy { color:var(--hp); border-color:var(--hp); }
-  
   .dice-shake { animation: rollShake 0.1s infinite; }
   .winner { transform:scale(1.2); border-color:var(--gold); box-shadow:0 0 20px var(--gold); z-index:2; transition:0.3s; background:#222; }
   .loser { opacity:0.4; transform:scale(0.9); grayscale:1; }
-
   @keyframes rollShake { 0%{transform:rotate(0deg)} 25%{transform:rotate(5deg)} 75%{transform:rotate(-5deg)} }
   
   /* Efeitos */
@@ -87,10 +86,12 @@
   .log-area { height:180px; overflow-y:auto; background:rgba(0,0,0,0.5); padding:10px; border-radius:8px; font-family:'Courier New', monospace; margin-top:12px; font-size:13px; border:1px solid var(--border); box-shadow:inset 0 0 10px rgba(0,0,0,0.5); }
   .log-line { margin-bottom:6px; border-bottom:1px dashed rgba(255,255,255,0.05); padding-bottom:4px; }
   
-  .quest-box { max-height:200px; overflow-y:auto; }
-  .quest-card { background:rgba(255,255,255,0.03); border-left:4px solid #555; padding:8px; margin-bottom:6px; font-size:13px; }
-  .quest-card.active { border-color:var(--gold); background:rgba(251, 191, 36, 0.05); }
+  .quest-box { max-height:220px; overflow-y:auto; }
+  .quest-card { background:rgba(255,255,255,0.03); border-left:4px solid #555; padding:10px; margin-bottom:6px; font-size:13px; display:flex; align-items:center; justify-content:space-between; }
+  .quest-card.active { border-color:var(--accent); background:rgba(56, 189, 248, 0.05); }
+  .quest-card.ready { border-color:var(--gold); background:rgba(251, 191, 36, 0.1); animation: pulseQ 1s infinite; }
   .quest-card.done { border-color:var(--xp); opacity:0.5; text-decoration:line-through; }
+  @keyframes pulseQ { 0%{box-shadow:inset 0 0 0 transparent} 50%{box-shadow:inset 0 0 10px rgba(251, 191, 36, 0.2)} }
 
   /* Modais */
   .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; z-index:100; }
@@ -103,18 +104,18 @@
 
 <div id="app">
   <div class="header">
-    <div class="row"><span style="font-size:32px">🎲</span> <div style="line-height:1.1"><b>Dados & Caos</b><br><small style="color:var(--gold); letter-spacing:1px; font-size:11px">VERSÃO 6.0</small></div></div>
+    <div class="row"><span style="font-size:32px">🎲</span> <div style="line-height:1.1"><b>Dados & Caos</b><br><small style="color:var(--gold); letter-spacing:1px; font-size:11px">VERSÃO 7.0</small></div></div>
     <div class="row">
       <button class="btn" onclick="UI.openModal('inv')">🎒 Inv</button>
       <button class="btn" onclick="UI.openModal('map')">🗺️ Mapa</button>
-      <button class="btn" style="border-color:var(--hp); color:var(--hp)" onclick="Core.resetGame()">✕ Reset</button>
+      <button class="btn" style="border-color:var(--hp); color:var(--hp)" onclick="Core.resetGame()">✕</button>
     </div>
   </div>
 
   <div class="grid-layout">
     <div class="panel">
       <div class="title">
-        <span>Ficha</span> 
+        <span>Herói</span> 
         <span id="ui-class" style="color:var(--accent); text-transform:uppercase; font-size:11px; border:1px solid var(--accent); padding:2px 6px; border-radius:4px"></span>
       </div>
       <div class="row between" style="margin-bottom:12px; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px">
@@ -122,40 +123,43 @@
         <span class="row" style="color:var(--gold)">🪙 <b id="ui-gold">0</b></span>
       </div>
       
-      <div style="display:flex; flex-direction:column; gap:8px">
-        <div>
-          <div class="row between"><small>HP</small> <small id="ui-hp-txt">0/0</small></div>
-          <div class="bar-box"><div id="bar-hp" class="bar-fill c-hp"></div></div>
-        </div>
-        <div>
-          <div class="row between"><small>MP</small> <small id="ui-mp-txt">0/0</small></div>
-          <div class="bar-box"><div id="bar-mp" class="bar-fill c-mp"></div></div>
-        </div>
-        <div>
-          <div class="row between"><small>XP</small> <small id="ui-xp-txt">0/0</small></div>
-          <div class="bar-box"><div id="bar-xp" class="bar-fill c-xp"></div></div>
-        </div>
+      <div style="margin-bottom:20px">
+        <div class="bar-box"><div id="bar-hp" class="bar-fill c-hp"></div></div>
+        <div class="row between" style="font-size:11px; margin-top:2px; color:#aaa"><span>HP</span><span id="ui-hp-txt"></span></div>
+        
+        <div class="bar-box" style="margin-top:8px"><div id="bar-mp" class="bar-fill c-mp"></div></div>
+        <div class="row between" style="font-size:11px; margin-top:2px; color:#aaa"><span>MP</span><span id="ui-mp-txt"></span></div>
+        
+        <div class="bar-box" style="margin-top:8px"><div id="bar-xp" class="bar-fill c-xp"></div></div>
+        <div class="row between" style="font-size:11px; margin-top:2px; color:#aaa"><span>XP</span><span id="ui-xp-txt"></span></div>
       </div>
 
-      <div class="title" style="margin-top:24px">Equipamento</div>
-      <div class="row between card-item" style="padding:8px; cursor:default; hover:none">
-        <span class="row">🗡️ <span id="ui-wpn-name" style="font-size:13px">...</span></span>
-        <b id="ui-wpn-dmg" style="font-size:12px; color:#aaa">0-0</b>
+      <div class="title row between">
+        <span>Atributos</span>
+        <span id="ui-points" style="font-size:11px; background:var(--xp); padding:2px 6px; border-radius:10px; color:#fff; display:none">0 PTS</span>
       </div>
-      <div class="row between card-item" style="padding:8px; cursor:default">
-        <span class="row">🛡️ <span id="ui-arm-name" style="font-size:13px">...</span></span>
-        <b id="ui-arm-def" style="font-size:12px; color:#aaa">+0</b>
+      <div class="stat-row">
+        <span title="Aumenta Dano Físico">💪 Força</span>
+        <div class="row"><b id="val-str" class="stat-val">0</b> <button class="stat-btn hidden" onclick="Core.addStat('str')">+</button></div>
       </div>
+      <div class="stat-row">
+        <span title="Soma no D20 do Duelo">⚡ Agilidade</span>
+        <div class="row"><b id="val-agi" class="stat-val">0</b> <button class="stat-btn hidden" onclick="Core.addStat('agi')">+</button></div>
+      </div>
+      <div class="stat-row">
+        <span title="Aumenta Dano Mágico e MP">🧠 Inteligência</span>
+        <div class="row"><b id="val-int" class="stat-val">0</b> <button class="stat-btn hidden" onclick="Core.addStat('int')">+</button></div>
+      </div>
+
     </div>
 
     <div class="panel" style="position:relative">
       <div id="game-screen" class="screen">
-        <div id="ui-bg-emoji" class="bg-emoji"></div>
         <div id="ui-main-emoji" class="main-emoji">🤔</div>
         
         <div id="enemy-hud" class="enemy-stats">
           <div class="enemy-bar-bg"><div id="enemy-hp-bar" class="enemy-bar-fill"></div></div>
-          <div id="enemy-hp-txt" class="enemy-hp-text">100%</div>
+          <div style="font-size:10px; color:#fff; margin-top:2px">HP INIMIGO</div>
         </div>
         
         <div id="dice-overlay">
@@ -165,15 +169,13 @@
               <div class="dice-val d-player" id="d-p">0</div>
               <span class="dice-label" style="color:var(--accent)">VOCÊ</span>
             </div>
-            <div class="dice-vs">VS</div>
+            <div style="font-size:24px;color:#666">VS</div>
             <div class="dice-col">
               <div class="dice-val d-enemy" id="d-e">0</div>
               <span class="dice-label" style="color:var(--hp)">INIMIGO</span>
             </div>
           </div>
         </div>
-
-        <div id="turn-indicator" class="hidden" style="position:absolute; top:12px; background:rgba(0,0,0,0.8); padding:6px 16px; border-radius:20px; font-size:12px; font-weight:bold; color:#fff; border:1px solid #555"></div>
       </div>
       
       <div id="ui-actions" class="grid-layout" style="grid-template-columns:1fr 1fr; margin-top:16px; gap:10px"></div>
@@ -183,9 +185,9 @@
     <div class="panel">
       <div class="title">Local</div>
       <div style="text-align:center; padding:15px; background:rgba(0,0,0,0.3); border-radius:8px; border:1px dashed var(--border)">
-        <div id="ui-loc-emoji" style="font-size:48px; margin-bottom:5px"></div>
-        <div id="ui-loc-name" style="font-weight:900; font-size:20px"></div>
-        <div id="ui-loc-desc" style="font-size:12px; opacity:0.7; margin-top:4px"></div>
+        <div id="ui-loc-emoji" style="font-size:40px"></div>
+        <div id="ui-loc-name" style="font-weight:900; font-size:18px"></div>
+        <div id="ui-loc-desc" style="font-size:12px; opacity:0.7"></div>
       </div>
       <div class="title" style="margin-top:24px">Missões</div>
       <div id="ui-quests" class="quest-box"></div>
@@ -204,47 +206,45 @@
 </div>
 
 <script>
-// --- DADOS DO JOGO ---
+// --- DADOS ---
 const DB = {
   classes: {
-    warrior: { name:'Guerreiro', e:'⚔️', hp:180, mp:30, agi:2, desc:'Tanque. Bônus em Defesa.' },
-    rogue:   { name:'Ladino',    e:'🗡️', hp:120, mp:50, agi:6, desc:'Rápido. Bônus no Dado.' },
-    mage:    { name:'Mago',      e:'🔮', hp:90,  mp:120,agi:3, desc:'Mana alta. Magia forte.' },
-    paladin: { name:'Paladino',  e:'🛡️', hp:160, mp:60, agi:1, desc:'Cura e Sobrevivência.' }
+    warrior: { name:'Guerreiro', e:'⚔️', hp:150, mp:20, str:4, agi:1, int:1, desc:'Forte e Resistente.' },
+    rogue:   { name:'Ladino',    e:'🗡️', hp:110, mp:40, str:2, agi:5, int:2, desc:'Mestre da Agilidade.' },
+    mage:    { name:'Mago',      e:'🔮', hp:80,  mp:100,str:1, agi:2, int:5, desc:'Poder Mágico.' },
+    paladin: { name:'Paladino',  e:'🛡️', hp:140, mp:50, str:3, agi:1, int:3, desc:'Defesa e Cura.' }
   },
   maps: {
-    town:      { name:'Vila',       e:'🏘️', lvl:1,  theme:'town', type:'safe', desc:'Mercado e descanso.' },
+    town:      { name:'Vila',       e:'🏘️', lvl:1,  theme:'town', type:'safe', desc:'Zona Segura.' },
     forest:    { name:'Floresta',   e:'🌲', lvl:1,  theme:'forest', type:'combat', mobs:['rat','wolf','thief'], desc:'Nível 1-4' },
     cave:      { name:'Caverna',    e:'🕸️', lvl:5,  theme:'cave', type:'combat', mobs:['bat','spider','orc'], desc:'Nível 5-9' },
     graveyard: { name:'Cemitério',  e:'⚰️', lvl:10, theme:'graveyard', type:'combat', mobs:['skel','zombie','ghost'], desc:'Nível 10-14' },
     volcano:   { name:'Vulcão',     e:'🌋', lvl:15, theme:'volcano', type:'combat', mobs:['imp','golem','dragon'], desc:'Nível 15-19' },
-    void:      { name:'O Vazio',    e:'🌌', lvl:20, theme:'void', type:'combat', mobs:['shadow','voidking'], desc:'Nível 20+ (Final)' }
+    void:      { name:'O Vazio',    e:'🌌', lvl:20, theme:'void', type:'combat', mobs:['shadow','voidking'], desc:'Nível 20+' }
   },
   mobs: {
     rat:    { name:'Rato',      e:'🐀', hp:30,  agi:1, atk:5,  xp:10,  gold:5 },
-    wolf:   { name:'Lobo',      e:'🐺', hp:50,  agi:5, atk:8,  xp:20,  gold:10 },
+    wolf:   { name:'Lobo',      e:'🐺', hp:50,  agi:4, atk:8,  xp:20,  gold:10 },
     thief:  { name:'Bandido',   e:'🥷', hp:60,  agi:6, atk:10, xp:30,  gold:18 },
-    bat:    { name:'Morcego',   e:'🦇', hp:50,  agi:9, atk:8,  xp:35,  gold:12 },
+    bat:    { name:'Morcego',   e:'🦇', hp:50,  agi:8, atk:8,  xp:35,  gold:12 },
     spider: { name:'Aranha',    e:'🕷️', hp:80,  agi:7, atk:12, xp:50,  gold:22 },
-    orc:    { name:'Orc',       e:'👹', hp:120, agi:3, atk:15, xp:70,  gold:35 },
-    skel:   { name:'Esqueleto', e:'💀', hp:100, agi:4, atk:18, xp:90,  gold:40 },
-    zombie: { name:'Zumbi',     e:'🧟', hp:150, agi:1, atk:22, xp:110, gold:45 },
+    orc:    { name:'Orc',       e:'👹', hp:120, agi:3, atk:16, xp:70,  gold:35 },
+    skel:   { name:'Esqueleto', e:'💀', hp:100, agi:5, atk:18, xp:90,  gold:40 },
+    zombie: { name:'Zumbi',     e:'🧟', hp:150, agi:2, atk:22, xp:110, gold:45 },
     ghost:  { name:'Fantasma',  e:'👻', hp:110, agi:10,atk:25, xp:130, gold:55 },
     imp:    { name:'Diabrete',  e:'👿', hp:140, agi:12,atk:28, xp:160, gold:65 },
     golem:  { name:'Golem',     e:'🗿', hp:300, agi:0, atk:40, xp:250, gold:120 },
-    dragon: { name:'Dragão',    e:'🐉', hp:400, agi:6, atk:50, xp:500, gold:400, boss:true },
+    dragon: { name:'Dragão',    e:'🐉', hp:400, agi:6, atk:55, xp:500, gold:400, boss:true },
     shadow: { name:'Sombra',    e:'👤', hp:350, agi:15,atk:60, xp:600, gold:250 },
-    voidking:{name:'Rei Vazio', e:'👑', hp:1000,agi:8, atk:90, xp:5000,gold:5000, boss:true }
+    voidking:{name:'Rei Vazio', e:'👑', hp:1000,agi:8, atk:95, xp:5000,gold:5000, boss:true }
   },
   quests: [
-    { id:'q1', target:'rat', count:5, title:'Praga de Ratos', reward_g:50, reward_xp:50 },
-    { id:'q2', target:'wolf', count:10, title:'Peles de Lobo', reward_g:150, reward_xp:200 },
-    { id:'q3', target:'orc', count:8, title:'Limpar Caverna', reward_g:300, reward_xp:400 },
-    { id:'q4', target:'skel', count:15, title:'Exército de Ossos', reward_g:600, reward_xp:800 },
-    { id:'q5', target:'ghost', count:10, title:'Exorcismo', reward_g:800, reward_xp:1000 },
-    { id:'q6', target:'golem', count:5, title:'Pedras de Magma', reward_g:1500, reward_xp:2000 },
-    { id:'q7', target:'dragon', count:1, title:'O Dragão', reward_g:3000, reward_xp:5000 },
-    { id:'q8', target:'voidking', count:1, title:'SALVAR O MUNDO', reward_g:10000, reward_xp:10000 }
+    { id:'q1', target:'rat', count:5, title:'Praga de Ratos', reward_g:100, reward_xp:100 },
+    { id:'q2', target:'wolf', count:10, title:'Peles de Lobo', reward_g:200, reward_xp:250 },
+    { id:'q3', target:'orc', count:8, title:'Limpar Caverna', reward_g:400, reward_xp:500 },
+    { id:'q4', target:'skel', count:15, title:'Exército de Ossos', reward_g:800, reward_xp:1000 },
+    { id:'q5', target:'golem', count:5, title:'Núcleos de Magma', reward_g:2000, reward_xp:2500 },
+    { id:'q6', target:'dragon', count:1, title:'O Dragão Ancião', reward_g:5000, reward_xp:5000 }
   ],
   items: {
     pot:  { name:'Poção Vida', e:'🧪', val:25, effect:p=>p.hp=Math.min(p.maxHp, p.hp+60), desc:'+60 HP' },
@@ -252,20 +252,14 @@ const DB = {
     bomb: { name:'Bomba',      e:'💣', val:50, dmg:50, desc:'50 Dano Fixo' }
   },
   weapons: [
-    { name:'Punhos', min:1, max:3 }, 
-    { name:'Adaga', min:4, max:8, cost:100 }, 
-    { name:'Espada Curta', min:8, max:14, cost:350 }, 
-    { name:'Machado Guerra', min:12, max:24, cost:900 },
-    { name:'Lâmina Mitril', min:20, max:35, cost:2500 },
-    { name:'Excalibur', min:40, max:60, cost:8000 }
+    { name:'Punhos', min:1, max:3 }, { name:'Adaga', min:4, max:8, cost:100 }, 
+    { name:'Espada', min:8, max:14, cost:350 }, { name:'Machado', min:12, max:24, cost:900 },
+    { name:'Lâmina Mitril', min:20, max:35, cost:2500 }, { name:'Excalibur', min:40, max:60, cost:8000 }
   ],
   armors: [
-    { name:'Roupa', def:0 }, 
-    { name:'Couro', def:3, cost:100 }, 
-    { name:'Malha', def:7, cost:350 }, 
-    { name:'Placas', def:14, cost:900 },
-    { name:'Dracônica', def:22, cost:2500 },
-    { name:'Divina', def:35, cost:8000 }
+    { name:'Roupa', def:0 }, { name:'Couro', def:3, cost:100 }, 
+    { name:'Malha', def:7, cost:350 }, { name:'Placas', def:14, cost:900 },
+    { name:'Dracônica', def:22, cost:2500 }, { name:'Divina', def:35, cost:8000 }
   ],
   skills: {
     bash: { name:'Golpe', cost:5, bonus:5, dice:8 },
@@ -276,10 +270,10 @@ const DB = {
 };
 
 // =======================================================================
-// CORE & UI
+// LÓGICA
 // =======================================================================
 let State = {
-  p: { name:'Herói', class:null, lvl:1, xp:0, gold:0, hp:100, mp:50, maxHp:100, maxMp:50, wpn:0, arm:0, inv:{} },
+  p: { name:'Herói', class:null, lvl:1, xp:0, gold:0, hp:100, mp:50, maxHp:100, maxMp:50, wpn:0, arm:0, inv:{}, str:1, agi:1, int:1, points:0 },
   loc: 'town',
   combat: null,
   q: {}
@@ -299,6 +293,22 @@ const UI = {
     document.getElementById('ui-gold').innerText = p.gold;
     document.getElementById('ui-class').innerText = c ? c.name : '';
     
+    // Stats & Points
+    document.getElementById('val-str').innerText = p.str;
+    document.getElementById('val-agi').innerText = p.agi;
+    document.getElementById('val-int').innerText = p.int;
+    
+    const ptsBtn = document.querySelectorAll('.stat-btn');
+    const ptsBadge = document.getElementById('ui-points');
+    if(p.points > 0) {
+      ptsBadge.innerText = `+${p.points} PONTOS`;
+      ptsBadge.style.display = 'block';
+      ptsBtn.forEach(b => b.classList.remove('hidden'));
+    } else {
+      ptsBadge.style.display = 'none';
+      ptsBtn.forEach(b => b.classList.add('hidden'));
+    }
+
     const setBar = (id, cur, max) => {
       document.getElementById(`ui-${id}-txt`).innerText = `${Math.floor(cur)}/${max}`;
       document.getElementById(`bar-${id}`).style.width = Math.min(100, (cur/max)*100) + '%';
@@ -307,35 +317,33 @@ const UI = {
     setBar('mp', p.mp, p.maxMp);
     setBar('xp', p.xp, p.lvl*150);
 
-    // Update Enemy Bar
+    // Enemy HUD
     const hud = document.getElementById('enemy-hud');
     if(State.combat) {
       hud.style.opacity = '1';
       const e = State.combat.e;
       const pct = Math.max(0, Math.min(100, (e.hp/e.maxHp)*100));
       document.getElementById('enemy-hp-bar').style.width = pct + '%';
-      document.getElementById('enemy-hp-txt').innerText = Math.floor(pct) + '%';
-    } else {
-      hud.style.opacity = '0';
-    }
+    } else hud.style.opacity = '0';
 
-    const w = DB.weapons[p.wpn];
-    const a = DB.armors[p.arm];
-    document.getElementById('ui-wpn-name').innerText = w.name;
-    document.getElementById('ui-wpn-dmg').innerText = `${w.min}-${w.max} dmg`;
-    document.getElementById('ui-arm-name').innerText = a.name;
-    document.getElementById('ui-arm-def').innerText = `+${a.def} def`;
-
+    // Quests with Reward Button
     const qBox = document.getElementById('ui-quests');
     qBox.innerHTML = '';
     DB.quests.forEach(q => {
-      const cur = State.q[q.target] || 0;
-      const done = cur >= q.count;
-      qBox.innerHTML += `
-        <div class="quest-card ${done?'done':(cur>0?'active':'')} row between">
-          <span>${done?'✅':'⬜'} <b>${q.title}</b> <small>(${DB.mobs[q.target].e})</small></span>
-          <small>${Math.min(cur,q.count)}/${q.count}</small>
-        </div>`;
+      // Logic for quests: 0=not started, 1..N=progress, 'done'=claimed
+      const cur = State.q[q.target] || 0; 
+      const claimed = cur === 'done';
+      const val = claimed ? q.count : cur;
+      const ready = !claimed && val >= q.count;
+      
+      let html = `<div class="quest-card ${claimed?'done':(ready?'ready':'')}">`;
+      html += `<div><span>${claimed?'✅':(ready?'⭐':'⬜')} <b>${q.title}</b></span><br><small>(${DB.mobs[q.target].e}) ${Math.min(val,q.count)}/${q.count}</small></div>`;
+      
+      if(ready) {
+        html += `<button class="btn btn-sm" style="background:var(--gold);color:#000" onclick="Core.claimQuest('${q.id}')">RESGATAR</button>`;
+      }
+      html += `</div>`;
+      qBox.innerHTML += html;
     });
   },
 
@@ -347,16 +355,13 @@ const UI = {
     box.prepend(div);
   },
 
-  // Animação de Duelo (Dois Dados)
   rollDuelAnim: (pVal, eVal, callback) => {
     const overlay = document.getElementById('dice-overlay');
     const pDie = document.getElementById('d-p');
     const eDie = document.getElementById('d-e');
     const msg = document.getElementById('dice-msg');
-    
     overlay.style.display = 'flex';
     msg.innerText = "ROLANDO DADOS...";
-    
     pDie.className = "dice-val d-player dice-shake";
     eDie.className = "dice-val d-enemy dice-shake";
     
@@ -369,28 +374,22 @@ const UI = {
         clearInterval(interval);
         pDie.innerText = pVal;
         eDie.innerText = eVal;
-        pDie.classList.remove('dice-shake');
-        eDie.classList.remove('dice-shake');
+        pDie.classList.remove('dice-shake'); eDie.classList.remove('dice-shake');
         
-        // Destaca Vencedor
         if(pVal >= eVal) {
           pDie.classList.add('winner'); eDie.classList.add('loser');
-          msg.innerText = "VOCÊ VENCEU!";
-          msg.style.color = "var(--xp)";
+          msg.innerText = "VOCÊ VENCEU!"; msg.style.color = "var(--xp)";
         } else {
           eDie.classList.add('winner'); pDie.classList.add('loser');
-          msg.innerText = "INIMIGO VENCEU!";
-          msg.style.color = "var(--hp)";
+          msg.innerText = "INIMIGO VENCEU!"; msg.style.color = "var(--hp)";
         }
-
         setTimeout(() => {
           overlay.style.display = 'none';
-          pDie.classList.remove('winner','loser');
-          eDie.classList.remove('winner','loser');
+          pDie.classList.remove('winner','loser'); eDie.classList.remove('winner','loser');
           callback();
         }, 1000);
       }
-    }, 70);
+    }, 60);
   },
 
   fxFloat: (txt, type) => {
@@ -405,7 +404,6 @@ const UI = {
 
   setScreen: (emoji, bg) => {
     document.getElementById('ui-main-emoji').innerText = emoji;
-    if(bg) document.getElementById('ui-bg-emoji').innerText = bg;
   },
   
   openModal: (type) => {
@@ -446,40 +444,60 @@ const UI = {
       }
       if(!ct.innerHTML) ct.innerHTML = '<div style="text-align:center;color:#666">Vazio.</div>';
     }
+    else if(type === 'reward') {
+      tt.innerText = 'Recompensa!';
+      ct.innerHTML = `<div style="text-align:center">
+        <div style="font-size:60px">🎁</div>
+        <h3>Missão Completa!</h3>
+        <p>Você ganhou:</p>
+        <div style="font-size:20px; color:var(--gold); margin:10px">🪙 ${State.tempReward.g} Ouro</div>
+        <div style="font-size:20px; color:var(--xp); margin:10px">✨ ${State.tempReward.x} XP</div>
+        <button class="btn btn-big" onclick="UI.closeModal()">Legal!</button>
+      </div>`;
+    }
   },
   closeModal: () => document.getElementById('modal-overlay').style.display = 'none'
 };
 
 const Core = {
   init: () => {
-    const s = localStorage.getItem('rpg_v6_chaos');
+    const s = localStorage.getItem('rpg_v7_stats');
     if(s) { State = JSON.parse(s); Core.travel(State.loc); UI.log('Jogo carregado.'); } 
     else { UI.openModal('class'); }
     UI.render();
   },
-  save: () => { localStorage.setItem('rpg_v6_chaos', JSON.stringify(State)); UI.render(); },
-  resetGame: () => { if(confirm('Apagar tudo?')){ localStorage.removeItem('rpg_v6_chaos'); location.reload(); } },
+  save: () => { localStorage.setItem('rpg_v7_stats', JSON.stringify(State)); UI.render(); },
+  resetGame: () => { if(confirm('Apagar tudo?')){ localStorage.removeItem('rpg_v7_stats'); location.reload(); } },
 
   setClass: (k) => {
     const c = DB.classes[k];
     State.p.class = k;
-    State.p.maxHp = c.hp; State.p.hp = c.hp;
-    State.p.maxMp = c.mp; State.p.mp = c.mp;
+    Object.assign(State.p, { maxHp:c.hp, hp:c.hp, maxMp:c.mp, mp:c.mp, str:c.str, agi:c.agi, int:c.int });
     State.p.inv = { pot:3 };
     UI.closeModal(); Core.travel('town');
+  },
+
+  addStat: (stat) => {
+    if(State.p.points > 0) {
+      State.p[stat]++;
+      State.p.points--;
+      // Efeito imediato: INT aumenta MaxMP
+      if(stat==='int') State.p.maxMp += 10;
+      UI.log(`Aumentou ${stat.toUpperCase()}!`);
+      Core.save();
+    }
   },
 
   travel: (id) => {
     State.loc = id; State.combat = null;
     UI.closeModal();
     const map = DB.maps[id];
-    UI.setScreen(map.e, map.e);
+    UI.setScreen(map.e);
     document.body.className = `theme-${map.theme}`;
     document.getElementById('ui-loc-emoji').innerText = map.e;
     document.getElementById('ui-loc-name').innerText = map.name;
     document.getElementById('ui-loc-desc').innerText = map.desc;
-    document.getElementById('turn-indicator').classList.add('hidden');
-
+    
     const area = document.getElementById('ui-actions');
     area.innerHTML = '';
     
@@ -500,17 +518,15 @@ const Core = {
 
   rest: () => {
     State.p.hp = State.p.maxHp; State.p.mp = State.p.maxMp;
-    UI.log('Você dormiu na estalagem.', 'color:#aaa');
-    UI.fxFloat('💤','miss'); Core.save();
+    UI.log('Recuperado.', 'color:#aaa'); Core.save();
   },
 
   explore: () => {
     const map = DB.maps[State.loc];
-    // Economia Nerfada: Agora ganha pouco ouro no chão (2 a 6 por nivel)
     if(Math.random() < 0.20) { 
       const g = Dice.roll(2, 6) * map.lvl;
       State.p.gold += g;
-      UI.log(`Encontrou ${g} moedas no chão.`);
+      UI.log(`Achou ${g} ouro.`);
       UI.fxFloat(`+${g}🪙`, 'crit');
       Core.save();
     } else {
@@ -524,9 +540,9 @@ const Core = {
   startCombat: (key) => {
     const m = DB.mobs[key];
     State.combat = { e: { ...m, maxHp:m.hp }, turn: 0 };
-    UI.setScreen(m.e, '⚔️');
+    UI.setScreen(m.e);
     UI.log(`⚔️ <b>${m.name}</b> apareceu!`, 'color:var(--dmg)');
-    Core.renderBtns(false); // Inicia combate sem iniciativa fixa, é duelo por ação
+    Core.renderBtns(false);
   },
 
   renderBtns: (disabled) => {
@@ -554,9 +570,9 @@ const Core = {
       p.mp -= DB.skills[skKey].cost;
     }
 
-    // DUELO: Rola os dois dados
-    const pRoll = Dice.d20();
-    const eRoll = Dice.d20();
+    // DUELO: D20 + AGI/2
+    const pRoll = Dice.d20() + Math.floor(p.agi/2);
+    const eRoll = Dice.d20(); // Inimigos ainda puros (ou podemos adicionar agi deles no futuro)
     
     Core.renderBtns(true);
     UI.rollDuelAnim(pRoll, eRoll, () => {
@@ -569,32 +585,35 @@ const Core = {
     const e = State.combat.e;
     const w = DB.weapons[p.wpn];
     
-    // Se Jogador Ganhou ou Empatou
     if(pRoll >= eRoll) {
-      // Turno do Jogador
+      // VENCEU DUELO
       if(type === 'atk') {
-        let dmg = Dice.roll(w.min, w.max) + Math.floor(p.lvl/2);
-        if(pRoll === 20) { dmg *= 2; UI.fxFloat('CRIT!','crit'); }
+        // Dano = Arma + STR
+        let dmg = Dice.roll(w.min, w.max) + p.str + Math.floor(p.lvl/2);
+        if(pRoll >= 20) { dmg = Math.floor(dmg*1.5); UI.fxFloat('CRIT!','crit'); }
         e.hp -= dmg;
-        UI.log(`✔️ Você venceu o duelo! Causou <b>${dmg}</b> dano.`);
+        UI.log(`Causou <b>${dmg}</b> dano.`);
         UI.fxFloat(dmg, '#fff');
       } 
       else if(type === 'skill') {
         const s = DB.skills[skKey];
         if(s.type === 'heal') {
-          p.hp = Math.min(p.maxHp, p.hp + s.val);
-          UI.log(`✔️ Magia com sucesso: +${s.val} HP.`);
+          // Cura = Base + INT
+          let heal = s.val + (p.int * 2);
+          p.hp = Math.min(p.maxHp, p.hp + heal);
+          UI.log(`Curou ${heal} HP.`);
           UI.fxFloat('❤','crit');
         } else {
-          let base = Dice.roll(1, s.dice) + s.bonus + p.lvl;
+          // Magia = Base + INT
+          let base = Dice.roll(1, s.dice) + s.bonus + (p.int * 2);
           e.hp -= base;
-          UI.log(`✨ ${s.name} acertou: <b>${base}</b> dano.`);
+          UI.log(`✨ ${s.name}: <b>${base}</b> dano.`);
           UI.fxFloat(base,'var(--mp)');
         }
       }
     } else {
-      // Turno do Inimigo (Ganhou o duelo)
-      UI.log(`❌ ${e.name} venceu o duelo!`, 'color:var(--hp)');
+      // PERDEU DUELO
+      UI.log(`❌ Inimigo venceu o duelo!`, 'color:var(--hp)');
       const armor = DB.armors[p.arm].def;
       let dmg = Math.max(0, (e.atk + Dice.roll(-2, 2)) - armor);
       p.hp -= dmg;
@@ -603,7 +622,7 @@ const Core = {
         document.getElementById('game-screen').style.animation = 'shake 0.3s';
         setTimeout(()=>document.getElementById('game-screen').style.animation='',300);
       } else {
-        UI.log('Sua armadura tankou o golpe.');
+        UI.log('Armadura bloqueou.');
         UI.fxFloat('BLOK','miss');
       }
     }
@@ -625,30 +644,38 @@ const Core = {
     State.p.gold += e.gold;
     State.p.xp += e.xp;
     
+    // Quest update
     let key = Object.keys(DB.mobs).find(k => DB.mobs[k].name === e.name);
-    if(key) State.q[key] = (State.q[key]||0) + 1;
-    
-    const quest = DB.quests.find(q => q.target === key);
-    if(quest && State.q[key] === quest.count) {
-      UI.log(`📜 MISSÃO CUMPRIDA: ${quest.title}!`, 'color:var(--gold)');
-      State.p.gold += quest.reward_g;
-      State.p.xp += quest.reward_xp;
+    if(key && State.q[key] !== 'done') {
+      State.q[key] = (State.q[key]||0) + 1;
     }
 
+    // Level
     if(State.p.xp >= State.p.lvl * 150) {
       State.p.xp = 0; State.p.lvl++;
-      State.p.maxHp += 20; State.p.hp = State.p.maxHp;
-      State.p.maxMp += 10; State.p.mp = State.p.maxMp;
-      UI.log(`🆙 LEVEL UP! Nível ${State.p.lvl}`);
+      State.p.points += 3; // GANHA PONTOS
+      State.p.maxHp += 10; State.p.hp = State.p.maxHp;
+      UI.log(`🆙 LEVEL UP! +3 Pontos de Atributo!`);
+      UI.fxFloat('LEVEL UP!','crit');
     }
 
     State.combat = null;
     UI.setScreen(e.e);
-    document.getElementById('ui-main-emoji').style.transform = 'rotate(90deg)';
     setTimeout(() => {
-      document.getElementById('ui-main-emoji').style.transform = '';
       Core.travel(State.loc);
-    }, 1500);
+    }, 1200);
+  },
+
+  claimQuest: (qid) => {
+    const q = DB.quests.find(x => x.id === qid);
+    if(q) {
+      State.q[q.target] = 'done'; // Mark as claimed
+      State.p.gold += q.reward_g;
+      State.p.xp += q.reward_xp;
+      State.tempReward = { g:q.reward_g, x:q.reward_xp };
+      UI.openModal('reward');
+      Core.save();
+    }
   },
 
   useItem: (k) => {
@@ -674,7 +701,6 @@ const Core = {
     document.getElementById('modal-overlay').style.display = 'flex';
     tt.innerText = 'Mercador Caro';
     ct.innerHTML = '';
-    
     for(let k in DB.items) {
       const it = DB.items[k];
       if(!it.dmg) ct.innerHTML += `<div class="card-item" onclick="Core.buy('item','${k}')"><span>${it.e} ${it.name}</span> <b>${it.val}🪙</b></div>`;
