@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RPG Emojis 5.0: Edição Épica</title>
+<title>RPG Emojis: Dados & Caos 6.0</title>
 
 <style>
   :root{
@@ -43,7 +43,7 @@
   .panel { background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow:0 10px 20px rgba(0,0,0,0.4); }
   .title { font-weight:800; border-bottom:2px solid var(--border); margin-bottom:12px; padding-bottom:6px; letter-spacing:0.5px; color:var(--accent); display:flex; justify-content:space-between; }
 
-  /* Barras */
+  /* Barras Jogador */
   .bar-box { background:rgba(0,0,0,0.6); height:16px; border-radius:8px; overflow:hidden; width:100%; margin-top:4px; border:1px solid rgba(255,255,255,0.1); position:relative; }
   .bar-fill { height:100%; width:0%; transition:width 0.4s ease-out; }
   .c-hp { background:linear-gradient(90deg, #991b1b, #ef4444); } 
@@ -51,20 +51,35 @@
   .c-xp { background:linear-gradient(90deg, #166534, #22c55e); }
 
   /* Tela de Jogo */
-  .screen { height:260px; background:rgba(0,0,0,0.4); border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-direction:column; position:relative; overflow:hidden; backdrop-filter:blur(2px); }
-  .main-emoji { font-size:100px; z-index:2; filter:drop-shadow(0 10px 30px rgba(0,0,0,0.7)); transition:transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  .screen { height:280px; background:rgba(0,0,0,0.4); border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-direction:column; position:relative; overflow:hidden; backdrop-filter:blur(2px); }
+  .main-emoji { font-size:100px; z-index:2; filter:drop-shadow(0 10px 30px rgba(0,0,0,0.7)); transition:transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position:relative; }
   .bg-emoji { position:absolute; font-size:240px; opacity:0.06; z-index:1; animation: pulseBg 8s infinite alternate; }
   @keyframes pulseBg { from{transform:scale(1) rotate(-5deg)} to{transform:scale(1.1) rotate(5deg)} }
 
-  /* Animação do Dado (Overlay) */
-  #dice-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.85); z-index:20; display:none; flex-direction:column; align-items:center; justify-content:center; border-radius:12px; backdrop-filter:blur(5px); }
-  .dice-box { font-size:80px; display:flex; align-items:center; gap:20px; }
-  .dice-anim { animation: rollShake 0.1s infinite; display:inline-block; }
-  .dice-res { color:var(--accent); font-weight:bold; font-size:100px; text-shadow:0 0 20px var(--accent); animation: popIn 0.3s; }
-  @keyframes rollShake { 0%{transform:rotate(0deg)} 25%{transform:rotate(10deg)} 75%{transform:rotate(-10deg)} }
-  @keyframes popIn { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+  /* Barra de Vida Inimigo */
+  .enemy-stats { width:140px; margin-top:10px; z-index:5; text-align:center; transition:opacity 0.3s; opacity:0; }
+  .enemy-bar-bg { height:8px; background:#000; border-radius:4px; overflow:hidden; border:1px solid #555; }
+  .enemy-bar-fill { height:100%; background:#ef4444; width:100%; transition:width 0.2s; }
+  .enemy-hp-text { font-size:11px; font-weight:bold; color:#fff; text-shadow:0 1px 2px #000; margin-top:2px; }
 
-  /* Efeitos de Dano */
+  /* DUELO DE DADOS */
+  #dice-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.85); z-index:20; display:none; flex-direction:column; align-items:center; justify-content:center; border-radius:12px; backdrop-filter:blur(5px); }
+  .dice-arena { display:flex; align-items:center; gap:30px; }
+  .dice-col { display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .dice-label { font-size:12px; font-weight:bold; text-transform:uppercase; letter-spacing:1px; }
+  .dice-val { font-size:60px; font-weight:900; width:80px; height:80px; display:flex; align-items:center; justify-content:center; background:#1e293b; border-radius:12px; border:2px solid #555; box-shadow:0 10px 20px rgba(0,0,0,0.5); }
+  .dice-vs { font-size:24px; color:#aaa; font-style:italic; }
+  
+  .d-player { color:var(--accent); border-color:var(--accent); }
+  .d-enemy { color:var(--hp); border-color:var(--hp); }
+  
+  .dice-shake { animation: rollShake 0.1s infinite; }
+  .winner { transform:scale(1.2); border-color:var(--gold); box-shadow:0 0 20px var(--gold); z-index:2; transition:0.3s; background:#222; }
+  .loser { opacity:0.4; transform:scale(0.9); grayscale:1; }
+
+  @keyframes rollShake { 0%{transform:rotate(0deg)} 25%{transform:rotate(5deg)} 75%{transform:rotate(-5deg)} }
+  
+  /* Efeitos */
   .dmg-pop { position:absolute; font-weight:900; font-size:36px; animation: floatUp 1s forwards; z-index:15; text-shadow:0 4px 8px rgba(0,0,0,1); pointer-events:none; }
   @keyframes floatUp { 0%{transform:translateY(0) scale(0.5);opacity:0} 10%{opacity:1;transform:translateY(-20px) scale(1.2)} 100%{transform:translateY(-100px) scale(1);opacity:0} }
 
@@ -72,7 +87,6 @@
   .log-area { height:180px; overflow-y:auto; background:rgba(0,0,0,0.5); padding:10px; border-radius:8px; font-family:'Courier New', monospace; margin-top:12px; font-size:13px; border:1px solid var(--border); box-shadow:inset 0 0 10px rgba(0,0,0,0.5); }
   .log-line { margin-bottom:6px; border-bottom:1px dashed rgba(255,255,255,0.05); padding-bottom:4px; }
   
-  /* Quests */
   .quest-box { max-height:200px; overflow-y:auto; }
   .quest-card { background:rgba(255,255,255,0.03); border-left:4px solid #555; padding:8px; margin-bottom:6px; font-size:13px; }
   .quest-card.active { border-color:var(--gold); background:rgba(251, 191, 36, 0.05); }
@@ -89,7 +103,7 @@
 
 <div id="app">
   <div class="header">
-    <div class="row"><span style="font-size:32px">🐉</span> <div style="line-height:1.1"><b>RPG Emojis</b><br><small style="color:var(--gold); letter-spacing:1px; font-size:11px">EDIÇÃO ÉPICA 5.0</small></div></div>
+    <div class="row"><span style="font-size:32px">🎲</span> <div style="line-height:1.1"><b>Dados & Caos</b><br><small style="color:var(--gold); letter-spacing:1px; font-size:11px">VERSÃO 6.0</small></div></div>
     <div class="row">
       <button class="btn" onclick="UI.openModal('inv')">🎒 Inv</button>
       <button class="btn" onclick="UI.openModal('map')">🗺️ Mapa</button>
@@ -139,11 +153,23 @@
         <div id="ui-bg-emoji" class="bg-emoji"></div>
         <div id="ui-main-emoji" class="main-emoji">🤔</div>
         
+        <div id="enemy-hud" class="enemy-stats">
+          <div class="enemy-bar-bg"><div id="enemy-hp-bar" class="enemy-bar-fill"></div></div>
+          <div id="enemy-hp-txt" class="enemy-hp-text">100%</div>
+        </div>
+        
         <div id="dice-overlay">
-          <div style="font-size:20px; color:#aaa; margin-bottom:10px">Rolando D20...</div>
-          <div class="dice-box">
-            <div id="dice-icon" class="dice-anim">🎲</div>
-            <div id="dice-result" style="width:120px; text-align:center">...</div>
+          <div style="margin-bottom:20px; font-size:18px; color:#fff; font-weight:bold" id="dice-msg">DUELO!</div>
+          <div class="dice-arena">
+            <div class="dice-col">
+              <div class="dice-val d-player" id="d-p">0</div>
+              <span class="dice-label" style="color:var(--accent)">VOCÊ</span>
+            </div>
+            <div class="dice-vs">VS</div>
+            <div class="dice-col">
+              <div class="dice-val d-enemy" id="d-e">0</div>
+              <span class="dice-label" style="color:var(--hp)">INIMIGO</span>
+            </div>
           </div>
         </div>
 
@@ -178,48 +204,38 @@
 </div>
 
 <script>
+// --- DADOS DO JOGO ---
 const DB = {
-  // 1. Classes Balanceadas
   classes: {
-    warrior: { name:'Guerreiro', e:'⚔️', hp:180, mp:30, agi:2, crit:20, desc:'Resistente e forte.' },
-    rogue:   { name:'Ladino',    e:'🗡️', hp:120, mp:50, agi:8, crit:18, desc:'Muito rápido. Crítico 18+.' },
-    mage:    { name:'Mago',      e:'🔮', hp:90,  mp:120,agi:4, crit:20, desc:'Mestre das magias.' },
-    paladin: { name:'Paladino',  e:'🛡️', hp:160, mp:60, agi:1, crit:20, desc:'Defensivo e cura.' }
+    warrior: { name:'Guerreiro', e:'⚔️', hp:180, mp:30, agi:2, desc:'Tanque. Bônus em Defesa.' },
+    rogue:   { name:'Ladino',    e:'🗡️', hp:120, mp:50, agi:6, desc:'Rápido. Bônus no Dado.' },
+    mage:    { name:'Mago',      e:'🔮', hp:90,  mp:120,agi:3, desc:'Mana alta. Magia forte.' },
+    paladin: { name:'Paladino',  e:'🛡️', hp:160, mp:60, agi:1, desc:'Cura e Sobrevivência.' }
   },
-  
-  // 2. Mapas (Progressão Lenta)
   maps: {
-    town:      { name:'Vila',       e:'🏘️', lvl:1,  theme:'town', type:'safe', desc:'Paz, descanso e compras.' },
+    town:      { name:'Vila',       e:'🏘️', lvl:1,  theme:'town', type:'safe', desc:'Mercado e descanso.' },
     forest:    { name:'Floresta',   e:'🌲', lvl:1,  theme:'forest', type:'combat', mobs:['rat','wolf','thief'], desc:'Nível 1-4' },
     cave:      { name:'Caverna',    e:'🕸️', lvl:5,  theme:'cave', type:'combat', mobs:['bat','spider','orc'], desc:'Nível 5-9' },
     graveyard: { name:'Cemitério',  e:'⚰️', lvl:10, theme:'graveyard', type:'combat', mobs:['skel','zombie','ghost'], desc:'Nível 10-14' },
     volcano:   { name:'Vulcão',     e:'🌋', lvl:15, theme:'volcano', type:'combat', mobs:['imp','golem','dragon'], desc:'Nível 15-19' },
     void:      { name:'O Vazio',    e:'🌌', lvl:20, theme:'void', type:'combat', mobs:['shadow','voidking'], desc:'Nível 20+ (Final)' }
   },
-
-  // 3. Monstros (Stats aumentados)
   mobs: {
-    rat:    { name:'Rato',      e:'🐀', hp:30,  agi:1, atk:5,  xp:10,  gold:4 },
-    wolf:   { name:'Lobo',      e:'🐺', hp:50,  agi:5, atk:8,  xp:20,  gold:8 },
-    thief:  { name:'Bandido',   e:'🥷', hp:60,  agi:6, atk:10, xp:30,  gold:15 },
-    
-    bat:    { name:'Morcego',   e:'🦇', hp:50,  agi:9, atk:8,  xp:35,  gold:10 },
-    spider: { name:'Aranha',    e:'🕷️', hp:80,  agi:7, atk:12, xp:50,  gold:20 },
-    orc:    { name:'Orc',       e:'👹', hp:120, agi:3, atk:15, xp:70,  gold:30 },
-
-    skel:   { name:'Esqueleto', e:'💀', hp:100, agi:4, atk:18, xp:90,  gold:35 },
-    zombie: { name:'Zumbi',     e:'🧟', hp:150, agi:1, atk:22, xp:110, gold:40 },
-    ghost:  { name:'Fantasma',  e:'👻', hp:110, agi:10,atk:25, xp:130, gold:50 },
-
-    imp:    { name:'Diabrete',  e:'👿', hp:140, agi:12,atk:28, xp:160, gold:60 },
-    golem:  { name:'Golem',     e:'🗿', hp:300, agi:0, atk:40, xp:250, gold:100 },
-    dragon: { name:'Dragão',    e:'🐉', hp:400, agi:6, atk:50, xp:500, gold:300, boss:true },
-
-    shadow: { name:'Sombra',    e:'👤', hp:350, agi:15,atk:60, xp:600, gold:200 },
+    rat:    { name:'Rato',      e:'🐀', hp:30,  agi:1, atk:5,  xp:10,  gold:5 },
+    wolf:   { name:'Lobo',      e:'🐺', hp:50,  agi:5, atk:8,  xp:20,  gold:10 },
+    thief:  { name:'Bandido',   e:'🥷', hp:60,  agi:6, atk:10, xp:30,  gold:18 },
+    bat:    { name:'Morcego',   e:'🦇', hp:50,  agi:9, atk:8,  xp:35,  gold:12 },
+    spider: { name:'Aranha',    e:'🕷️', hp:80,  agi:7, atk:12, xp:50,  gold:22 },
+    orc:    { name:'Orc',       e:'👹', hp:120, agi:3, atk:15, xp:70,  gold:35 },
+    skel:   { name:'Esqueleto', e:'💀', hp:100, agi:4, atk:18, xp:90,  gold:40 },
+    zombie: { name:'Zumbi',     e:'🧟', hp:150, agi:1, atk:22, xp:110, gold:45 },
+    ghost:  { name:'Fantasma',  e:'👻', hp:110, agi:10,atk:25, xp:130, gold:55 },
+    imp:    { name:'Diabrete',  e:'👿', hp:140, agi:12,atk:28, xp:160, gold:65 },
+    golem:  { name:'Golem',     e:'🗿', hp:300, agi:0, atk:40, xp:250, gold:120 },
+    dragon: { name:'Dragão',    e:'🐉', hp:400, agi:6, atk:50, xp:500, gold:400, boss:true },
+    shadow: { name:'Sombra',    e:'👤', hp:350, agi:15,atk:60, xp:600, gold:250 },
     voidking:{name:'Rei Vazio', e:'👑', hp:1000,agi:8, atk:90, xp:5000,gold:5000, boss:true }
   },
-
-  // 4. Missões (Mais longas)
   quests: [
     { id:'q1', target:'rat', count:5, title:'Praga de Ratos', reward_g:50, reward_xp:50 },
     { id:'q2', target:'wolf', count:10, title:'Peles de Lobo', reward_g:150, reward_xp:200 },
@@ -230,8 +246,6 @@ const DB = {
     { id:'q7', target:'dragon', count:1, title:'O Dragão', reward_g:3000, reward_xp:5000 },
     { id:'q8', target:'voidking', count:1, title:'SALVAR O MUNDO', reward_g:10000, reward_xp:10000 }
   ],
-
-  // 5. Itens (Caros)
   items: {
     pot:  { name:'Poção Vida', e:'🧪', val:25, effect:p=>p.hp=Math.min(p.maxHp, p.hp+60), desc:'+60 HP' },
     ether:{ name:'Éter Mana',  e:'🔷', val:25, effect:p=>p.mp=Math.min(p.maxMp, p.mp+40), desc:'+40 MP' },
@@ -281,21 +295,30 @@ const UI = {
     const p = State.p;
     const c = DB.classes[p.class];
     
-    // Header
     document.getElementById('ui-lvl').innerText = p.lvl;
     document.getElementById('ui-gold').innerText = p.gold;
     document.getElementById('ui-class').innerText = c ? c.name : '';
     
-    // Bars
     const setBar = (id, cur, max) => {
       document.getElementById(`ui-${id}-txt`).innerText = `${Math.floor(cur)}/${max}`;
       document.getElementById(`bar-${id}`).style.width = Math.min(100, (cur/max)*100) + '%';
     };
     setBar('hp', p.hp, p.maxHp);
     setBar('mp', p.mp, p.maxMp);
-    setBar('xp', p.xp, p.lvl*150); // Leveling mais lento
+    setBar('xp', p.xp, p.lvl*150);
 
-    // Gear
+    // Update Enemy Bar
+    const hud = document.getElementById('enemy-hud');
+    if(State.combat) {
+      hud.style.opacity = '1';
+      const e = State.combat.e;
+      const pct = Math.max(0, Math.min(100, (e.hp/e.maxHp)*100));
+      document.getElementById('enemy-hp-bar').style.width = pct + '%';
+      document.getElementById('enemy-hp-txt').innerText = Math.floor(pct) + '%';
+    } else {
+      hud.style.opacity = '0';
+    }
+
     const w = DB.weapons[p.wpn];
     const a = DB.armors[p.arm];
     document.getElementById('ui-wpn-name').innerText = w.name;
@@ -303,7 +326,6 @@ const UI = {
     document.getElementById('ui-arm-name').innerText = a.name;
     document.getElementById('ui-arm-def').innerText = `+${a.def} def`;
 
-    // Quests
     const qBox = document.getElementById('ui-quests');
     qBox.innerHTML = '';
     DB.quests.forEach(q => {
@@ -325,37 +347,50 @@ const UI = {
     box.prepend(div);
   },
 
-  // Animação de Dados Épica
-  rollDiceAnim: (finalValue, callback) => {
+  // Animação de Duelo (Dois Dados)
+  rollDuelAnim: (pVal, eVal, callback) => {
     const overlay = document.getElementById('dice-overlay');
-    const resDiv = document.getElementById('dice-result');
-    const icon = document.getElementById('dice-icon');
+    const pDie = document.getElementById('d-p');
+    const eDie = document.getElementById('d-e');
+    const msg = document.getElementById('dice-msg');
     
     overlay.style.display = 'flex';
-    resDiv.classList.remove('dice-res');
-    icon.classList.add('dice-anim');
+    msg.innerText = "ROLANDO DADOS...";
+    
+    pDie.className = "dice-val d-player dice-shake";
+    eDie.className = "dice-val d-enemy dice-shake";
     
     let rolls = 0;
     const interval = setInterval(() => {
-      resDiv.innerText = Math.floor(Math.random()*20)+1;
+      pDie.innerText = Math.floor(Math.random()*20)+1;
+      eDie.innerText = Math.floor(Math.random()*20)+1;
       rolls++;
-      if(rolls > 10) {
+      if(rolls > 12) {
         clearInterval(interval);
-        resDiv.innerText = finalValue;
-        resDiv.classList.add('dice-res');
-        icon.classList.remove('dice-anim');
+        pDie.innerText = pVal;
+        eDie.innerText = eVal;
+        pDie.classList.remove('dice-shake');
+        eDie.classList.remove('dice-shake');
         
-        // Cor do resultado
-        if(finalValue === 20) resDiv.style.color = 'var(--crit)';
-        else if(finalValue === 1) resDiv.style.color = 'var(--hp)';
-        else resDiv.style.color = 'var(--accent)';
+        // Destaca Vencedor
+        if(pVal >= eVal) {
+          pDie.classList.add('winner'); eDie.classList.add('loser');
+          msg.innerText = "VOCÊ VENCEU!";
+          msg.style.color = "var(--xp)";
+        } else {
+          eDie.classList.add('winner'); pDie.classList.add('loser');
+          msg.innerText = "INIMIGO VENCEU!";
+          msg.style.color = "var(--hp)";
+        }
 
         setTimeout(() => {
           overlay.style.display = 'none';
+          pDie.classList.remove('winner','loser');
+          eDie.classList.remove('winner','loser');
           callback();
-        }, 800);
+        }, 1000);
       }
-    }, 80);
+    }, 70);
   },
 
   fxFloat: (txt, type) => {
@@ -417,13 +452,13 @@ const UI = {
 
 const Core = {
   init: () => {
-    const s = localStorage.getItem('rpg_v5_epic');
+    const s = localStorage.getItem('rpg_v6_chaos');
     if(s) { State = JSON.parse(s); Core.travel(State.loc); UI.log('Jogo carregado.'); } 
     else { UI.openModal('class'); }
     UI.render();
   },
-  save: () => { localStorage.setItem('rpg_v5_epic', JSON.stringify(State)); UI.render(); },
-  resetGame: () => { if(confirm('Apagar tudo?')){ localStorage.removeItem('rpg_v5_epic'); location.reload(); } },
+  save: () => { localStorage.setItem('rpg_v6_chaos', JSON.stringify(State)); UI.render(); },
+  resetGame: () => { if(confirm('Apagar tudo?')){ localStorage.removeItem('rpg_v6_chaos'); location.reload(); } },
 
   setClass: (k) => {
     const c = DB.classes[k];
@@ -471,10 +506,11 @@ const Core = {
 
   explore: () => {
     const map = DB.maps[State.loc];
-    if(Math.random() < 0.25) { // 25% chance de loot
-      const g = Dice.roll(10, 30) * map.lvl;
+    // Economia Nerfada: Agora ganha pouco ouro no chão (2 a 6 por nivel)
+    if(Math.random() < 0.20) { 
+      const g = Dice.roll(2, 6) * map.lvl;
       State.p.gold += g;
-      UI.log(`Encontrou um baú com ${g} ouro!`);
+      UI.log(`Encontrou ${g} moedas no chão.`);
       UI.fxFloat(`+${g}🪙`, 'crit');
       Core.save();
     } else {
@@ -484,37 +520,17 @@ const Core = {
     }
   },
 
-  // --- COMBATE ---
+  // --- COMBATE DUELO ---
   startCombat: (key) => {
     const m = DB.mobs[key];
     State.combat = { e: { ...m, maxHp:m.hp }, turn: 0 };
     UI.setScreen(m.e, '⚔️');
     UI.log(`⚔️ <b>${m.name}</b> apareceu!`, 'color:var(--dmg)');
-    
-    // Iniciativa
-    const pAgi = DB.classes[State.p.class].agi;
-    const pInit = Dice.d20() + pAgi;
-    const eInit = Dice.d20() + m.agi;
-    
-    if(eInit > pInit) {
-      UI.log(`${m.name} é mais rápido!`);
-      document.getElementById('turn-indicator').innerText = "TURNO DO INIMIGO";
-      document.getElementById('turn-indicator').classList.remove('hidden');
-      document.getElementById('turn-indicator').style.background = "var(--hp)";
-      Core.renderBtns(true);
-      setTimeout(() => Core.enemyTurn(true), 1200);
-    } else {
-      UI.log(`Você age primeiro!`);
-      document.getElementById('turn-indicator').innerText = "SEU TURNO";
-      document.getElementById('turn-indicator').classList.remove('hidden');
-      document.getElementById('turn-indicator').style.background = "var(--accent)";
-      Core.renderBtns(false);
-    }
+    Core.renderBtns(false); // Inicia combate sem iniciativa fixa, é duelo por ação
   },
 
   renderBtns: (disabled) => {
     const area = document.getElementById('ui-actions');
-    // Pega skill da classe
     let sk = 'bash';
     if(State.p.class === 'rogue') sk = 'stab';
     if(State.p.class === 'mage') sk = 'fire';
@@ -522,7 +538,7 @@ const Core = {
     const sData = DB.skills[sk];
 
     area.innerHTML = `
-      <button class="btn btn-big" ${disabled?'disabled':''} onclick="Core.act('atk')">⚔️ Atacar</button>
+      <button class="btn btn-big" ${disabled?'disabled':''} onclick="Core.act('atk')">⚔️ Duelo</button>
       <button class="btn btn-big" ${disabled?'disabled':''} onclick="Core.act('skill','${sk}')" style="color:var(--mp)">✨ ${sData.name} (${sData.cost})</button>
       <button class="btn btn-big" ${disabled?'disabled':''} onclick="UI.openModal('inv')">🎒 Item</button>
       <button class="btn btn-big" ${disabled?'disabled':''} onclick="Core.travel('town')">🏃 Fugir</button>
@@ -533,96 +549,72 @@ const Core = {
     if(!State.combat) return;
     const p = State.p;
     
-    // Verifica Mana antes
     if(type === 'skill') {
       if(p.mp < DB.skills[skKey].cost) { UI.log('Sem mana!'); return; }
       p.mp -= DB.skills[skKey].cost;
     }
 
-    // Rola o dado visualmente, depois executa
-    const d20 = Dice.d20();
-    UI.rollDiceAnim(d20, () => {
-      Core.resolvePlayer(d20, type, skKey);
+    // DUELO: Rola os dois dados
+    const pRoll = Dice.d20();
+    const eRoll = Dice.d20();
+    
+    Core.renderBtns(true);
+    UI.rollDuelAnim(pRoll, eRoll, () => {
+      Core.resolveDuel(pRoll, eRoll, type, skKey);
     });
   },
 
-  resolvePlayer: (roll, type, skKey) => {
+  resolveDuel: (pRoll, eRoll, type, skKey) => {
     const p = State.p;
     const e = State.combat.e;
-    const c = DB.classes[p.class];
     const w = DB.weapons[p.wpn];
-    let dmg = 0;
-
-    if(roll === 1) {
-      UI.log('🎲 1: Falha Crítica! Você escorregou.', 'color:var(--miss)');
-      UI.fxFloat('FALHA','miss');
-      p.hp -= Math.floor(p.maxHp * 0.05); // 5% dano
-    } else {
-      let isCrit = roll >= c.crit;
+    
+    // Se Jogador Ganhou ou Empatou
+    if(pRoll >= eRoll) {
+      // Turno do Jogador
       if(type === 'atk') {
-        let base = Dice.roll(w.min, w.max) + Math.floor(p.lvl/2);
-        if(isCrit) { base = Math.floor(base * 1.8); UI.fxFloat('CRIT!','crit'); }
-        else UI.fxFloat(base,'#fff');
-        dmg = base;
+        let dmg = Dice.roll(w.min, w.max) + Math.floor(p.lvl/2);
+        if(pRoll === 20) { dmg *= 2; UI.fxFloat('CRIT!','crit'); }
         e.hp -= dmg;
-        UI.log(`🎲 ${roll}: Atacou por <b>${dmg}</b> dano.`);
+        UI.log(`✔️ Você venceu o duelo! Causou <b>${dmg}</b> dano.`);
+        UI.fxFloat(dmg, '#fff');
       } 
       else if(type === 'skill') {
         const s = DB.skills[skKey];
         if(s.type === 'heal') {
           p.hp = Math.min(p.maxHp, p.hp + s.val);
-          UI.log(`🎲 ${roll}: Curou ${s.val} HP.`);
+          UI.log(`✔️ Magia com sucesso: +${s.val} HP.`);
           UI.fxFloat('❤','crit');
         } else {
           let base = Dice.roll(1, s.dice) + s.bonus + p.lvl;
-          if(roll===20) { base *= 2; UI.fxFloat('MAX!','crit'); }
           e.hp -= base;
-          UI.log(`✨ ${s.name}: <b>${base}</b> dano.`);
+          UI.log(`✨ ${s.name} acertou: <b>${base}</b> dano.`);
           UI.fxFloat(base,'var(--mp)');
         }
       }
-    }
-
-    if(e.hp <= 0) Core.win();
-    else {
-      Core.renderBtns(true);
-      setTimeout(() => Core.enemyTurn(), 1000);
-    }
-    Core.save();
-  },
-
-  enemyTurn: (skipMsg) => {
-    if(!State.combat) return;
-    const p = State.p;
-    const e = State.combat.e;
-    const armor = DB.armors[p.arm].def;
-    
-    const roll = Dice.d20();
-    if(roll === 1) {
-      UI.log(`${e.name} errou o ataque!`);
     } else {
+      // Turno do Inimigo (Ganhou o duelo)
+      UI.log(`❌ ${e.name} venceu o duelo!`, 'color:var(--hp)');
+      const armor = DB.armors[p.arm].def;
       let dmg = Math.max(0, (e.atk + Dice.roll(-2, 2)) - armor);
-      if(roll === 20) { dmg *= 2; UI.log(`${e.name} CRITOU!`); }
       p.hp -= dmg;
       if(dmg > 0) {
-        if(!skipMsg) UI.log(`${e.name} causou ${dmg} dano.`);
         UI.fxFloat(`-${dmg}`,'bad');
         document.getElementById('game-screen').style.animation = 'shake 0.3s';
         setTimeout(()=>document.getElementById('game-screen').style.animation='',300);
       } else {
-        UI.log(`Sua armadura tankou o hit.`);
+        UI.log('Sua armadura tankou o golpe.');
         UI.fxFloat('BLOK','miss');
       }
     }
 
-    if(p.hp <= 0) {
+    if(e.hp <= 0) Core.win();
+    else if(p.hp <= 0) {
       UI.log('💀 VOCÊ MORREU...', 'color:red');
       p.hp = 1; p.gold = Math.floor(p.gold/2);
       Core.travel('town');
     } else {
       Core.renderBtns(false);
-      document.getElementById('turn-indicator').innerText = "SEU TURNO";
-      document.getElementById('turn-indicator').style.background = "var(--accent)";
     }
     Core.save();
   },
@@ -633,12 +625,9 @@ const Core = {
     State.p.gold += e.gold;
     State.p.xp += e.xp;
     
-    // Quest
-    // Acha a key pelo nome (metodo simples)
     let key = Object.keys(DB.mobs).find(k => DB.mobs[k].name === e.name);
     if(key) State.q[key] = (State.q[key]||0) + 1;
     
-    // Check Quest Done
     const quest = DB.quests.find(q => q.target === key);
     if(quest && State.q[key] === quest.count) {
       UI.log(`📜 MISSÃO CUMPRIDA: ${quest.title}!`, 'color:var(--gold)');
@@ -646,7 +635,6 @@ const Core = {
       State.p.xp += quest.reward_xp;
     }
 
-    // Level
     if(State.p.xp >= State.p.lvl * 150) {
       State.p.xp = 0; State.p.lvl++;
       State.p.maxHp += 20; State.p.hp = State.p.maxHp;
@@ -667,10 +655,10 @@ const Core = {
     if(State.p.inv[k]>0) {
       State.p.inv[k]--;
       const it = DB.items[k];
-      if(it.dmg) { // Bomba
+      if(it.dmg) {
         if(!State.combat) return;
         State.combat.e.hp -= it.dmg;
-        UI.log(`Bomba explodiu: ${it.dmg} dano!`);
+        UI.log(`Bomba: ${it.dmg} dano!`);
         if(State.combat.e.hp<=0) Core.win();
       } else {
         it.effect(State.p);
@@ -687,13 +675,11 @@ const Core = {
     tt.innerText = 'Mercador Caro';
     ct.innerHTML = '';
     
-    // Potions
     for(let k in DB.items) {
       const it = DB.items[k];
       if(!it.dmg) ct.innerHTML += `<div class="card-item" onclick="Core.buy('item','${k}')"><span>${it.e} ${it.name}</span> <b>${it.val}🪙</b></div>`;
     }
     ct.innerHTML += '<hr style="border-color:#555">';
-    // Gear
     const nw = DB.weapons[State.p.wpn+1];
     if(nw) ct.innerHTML += `<div class="card-item" onclick="Core.buy('wpn')"><span>⚔️ ${nw.name} (${nw.min}-${nw.max})</span> <b>${nw.cost}🪙</b></div>`;
     const na = DB.armors[State.p.arm+1];
