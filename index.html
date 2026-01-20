@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RPG Emojis 7.0: Stats & Rewards</title>
+<title>RPG Emojis 8.0: Montarias & Lendas</title>
 
 <style>
   :root{
@@ -55,7 +55,7 @@
   .stat-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed rgba(255,255,255,0.1); }
   .stat-val { font-family:monospace; font-size:14px; color:#fff; }
   .stat-btn { background:var(--xp); color:#fff; border:none; width:24px; height:24px; border-radius:4px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; }
-  .stat-btn:hover { transform:scale(1.1); }
+  .mount-badge { background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:6px; font-size:12px; margin-top:10px; display:flex; align-items:center; gap:6px; border:1px solid #555; }
 
   /* Tela de Jogo */
   .screen { height:280px; background:rgba(0,0,0,0.4); border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-direction:column; position:relative; overflow:hidden; backdrop-filter:blur(2px); }
@@ -98,13 +98,17 @@
   .modal-box { background:var(--panel); padding:24px; border-radius:16px; width:100%; max-width:500px; border:1px solid var(--border); max-height:85vh; overflow-y:auto; }
   .card-item { background:rgba(255,255,255,0.05); padding:14px; border-radius:10px; cursor:pointer; border:1px solid transparent; margin-bottom:8px; transition:0.2s; display:flex; justify-content:space-between; align-items:center; }
   .card-item:hover { border-color:var(--accent); background:rgba(255,255,255,0.1); transform:translateX(5px); }
+  
+  .tab-menu { display:flex; gap:10px; margin-bottom:10px; }
+  .tab-btn { flex:1; padding:8px; background:#111; border:1px solid #444; color:#888; cursor:pointer; }
+  .tab-btn.active { background:var(--accent); color:#000; border-color:var(--accent); font-weight:bold; }
 </style>
 </head>
 <body>
 
 <div id="app">
   <div class="header">
-    <div class="row"><span style="font-size:32px">🎲</span> <div style="line-height:1.1"><b>Dados & Caos</b><br><small style="color:var(--gold); letter-spacing:1px; font-size:11px">VERSÃO 7.0</small></div></div>
+    <div class="row"><span style="font-size:32px">🐉</span> <div style="line-height:1.1"><b>Montarias & Lendas</b><br><small style="color:var(--gold); letter-spacing:1px; font-size:11px">RPG 8.0</small></div></div>
     <div class="row">
       <button class="btn" onclick="UI.openModal('inv')">🎒 Inv</button>
       <button class="btn" onclick="UI.openModal('map')">🗺️ Mapa</button>
@@ -123,14 +127,12 @@
         <span class="row" style="color:var(--gold)">🪙 <b id="ui-gold">0</b></span>
       </div>
       
-      <div style="margin-bottom:20px">
+      <div style="margin-bottom:15px">
         <div class="bar-box"><div id="bar-hp" class="bar-fill c-hp"></div></div>
         <div class="row between" style="font-size:11px; margin-top:2px; color:#aaa"><span>HP</span><span id="ui-hp-txt"></span></div>
-        
-        <div class="bar-box" style="margin-top:8px"><div id="bar-mp" class="bar-fill c-mp"></div></div>
+        <div class="bar-box" style="margin-top:6px"><div id="bar-mp" class="bar-fill c-mp"></div></div>
         <div class="row between" style="font-size:11px; margin-top:2px; color:#aaa"><span>MP</span><span id="ui-mp-txt"></span></div>
-        
-        <div class="bar-box" style="margin-top:8px"><div id="bar-xp" class="bar-fill c-xp"></div></div>
+        <div class="bar-box" style="margin-top:6px"><div id="bar-xp" class="bar-fill c-xp"></div></div>
         <div class="row between" style="font-size:11px; margin-top:2px; color:#aaa"><span>XP</span><span id="ui-xp-txt"></span></div>
       </div>
 
@@ -139,16 +141,21 @@
         <span id="ui-points" style="font-size:11px; background:var(--xp); padding:2px 6px; border-radius:10px; color:#fff; display:none">0 PTS</span>
       </div>
       <div class="stat-row">
-        <span title="Aumenta Dano Físico">💪 Força</span>
+        <span title="Dano Físico">💪 Força</span>
         <div class="row"><b id="val-str" class="stat-val">0</b> <button class="stat-btn hidden" onclick="Core.addStat('str')">+</button></div>
       </div>
       <div class="stat-row">
-        <span title="Soma no D20 do Duelo">⚡ Agilidade</span>
+        <span title="Iniciativa e Duelo">⚡ Agilidade</span>
         <div class="row"><b id="val-agi" class="stat-val">0</b> <button class="stat-btn hidden" onclick="Core.addStat('agi')">+</button></div>
       </div>
       <div class="stat-row">
-        <span title="Aumenta Dano Mágico e MP">🧠 Inteligência</span>
+        <span title="Magia e Mana">🧠 Inteligência</span>
         <div class="row"><b id="val-int" class="stat-val">0</b> <button class="stat-btn hidden" onclick="Core.addStat('int')">+</button></div>
+      </div>
+      
+      <div id="ui-mount" class="mount-badge hidden">
+        <span style="font-size:18px">🐎</span> 
+        <div><b style="color:var(--gold)">Cavalo</b><br><small style="color:#aaa">+2 AGI</small></div>
       </div>
 
     </div>
@@ -206,7 +213,7 @@
 </div>
 
 <script>
-// --- DADOS ---
+// --- BANCO DE DADOS ---
 const DB = {
   classes: {
     warrior: { name:'Guerreiro', e:'⚔️', hp:150, mp:20, str:4, agi:1, int:1, desc:'Forte e Resistente.' },
@@ -247,14 +254,17 @@ const DB = {
     { id:'q6', target:'dragon', count:1, title:'O Dragão Ancião', reward_g:5000, reward_xp:5000 }
   ],
   items: {
-    pot:  { name:'Poção Vida', e:'🧪', val:25, effect:p=>p.hp=Math.min(p.maxHp, p.hp+60), desc:'+60 HP' },
-    ether:{ name:'Éter Mana',  e:'🔷', val:25, effect:p=>p.mp=Math.min(p.maxMp, p.mp+40), desc:'+40 MP' },
-    bomb: { name:'Bomba',      e:'💣', val:50, dmg:50, desc:'50 Dano Fixo' }
+    pot:  { name:'Poção P.', e:'🧪', val:25, effect:p=>p.hp=Math.min(p.maxHp, p.hp+60), desc:'+60 HP' },
+    mega: { name:'Mega Poção',e:'🍷', val:100, effect:p=>p.hp=Math.min(p.maxHp, p.hp+150), desc:'+150 HP' },
+    elixir:{ name:'Elixir',   e:'🌟', val:300, effect:p=>{p.hp=p.maxHp;p.mp=p.maxMp}, desc:'FULL HP/MP' },
+    ether:{ name:'Éter Mana', e:'🔷', val:25, effect:p=>p.mp=Math.min(p.maxMp, p.mp+40), desc:'+40 MP' },
+    bomb: { name:'Bomba',     e:'💣', val:50, dmg:50, desc:'50 Dano Fixo' }
   },
   weapons: [
     { name:'Punhos', min:1, max:3 }, { name:'Adaga', min:4, max:8, cost:100 }, 
     { name:'Espada', min:8, max:14, cost:350 }, { name:'Machado', min:12, max:24, cost:900 },
-    { name:'Lâmina Mitril', min:20, max:35, cost:2500 }, { name:'Excalibur', min:40, max:60, cost:8000 }
+    { name:'Lâmina Mitril', min:20, max:35, cost:2500 }, { name:'Lâmina Vazio', min:30, max:50, cost:6000 },
+    { name:'Deus da Guerra', min:50, max:80, cost:15000 }
   ],
   armors: [
     { name:'Roupa', def:0 }, { name:'Couro', def:3, cost:100 }, 
@@ -266,14 +276,17 @@ const DB = {
     stab: { name:'Furar', cost:5, bonus:3, dice:10 },
     fire: { name:'Fogo',  cost:10, bonus:8, dice:20 },
     heal: { name:'Cura',  cost:12, val:50, type:'heal' }
+  },
+  mounts: {
+    horse: { name:'Cavalo', e:'🐎', cost:500, agi:2, str:0, desc:'+2 AGI' },
+    wolf:  { name:'Lobo',   e:'🐺', cost:1500, agi:2, str:2, desc:'+2 AGI, +2 FOR' },
+    griff: { name:'Grifo',  e:'🦅', cost:4000, agi:5, str:2, desc:'+5 AGI, +2 FOR' },
+    dragon:{ name:'Dragão', e:'🐉', cost:10000, agi:5, str:5, desc:'+5 AGI, +5 FOR' }
   }
 };
 
-// =======================================================================
-// LÓGICA
-// =======================================================================
 let State = {
-  p: { name:'Herói', class:null, lvl:1, xp:0, gold:0, hp:100, mp:50, maxHp:100, maxMp:50, wpn:0, arm:0, inv:{}, str:1, agi:1, int:1, points:0 },
+  p: { name:'Herói', class:null, lvl:1, xp:0, gold:0, hp:100, mp:50, maxHp:100, maxMp:50, wpn:0, arm:0, inv:{}, str:1, agi:1, int:1, points:0, mount:null },
   loc: 'town',
   combat: null,
   q: {}
@@ -284,19 +297,39 @@ const Dice = {
   roll: (min, max) => Math.floor(Math.random()*(max-min+1))+min
 };
 
+// Pega atributos totais (Base + Montaria)
+const getStats = () => {
+  const p = State.p;
+  let s = { str:p.str, agi:p.agi, int:p.int };
+  if(p.mount && DB.mounts[p.mount]) {
+    const m = DB.mounts[p.mount];
+    s.str += m.str; s.agi += m.agi;
+  }
+  return s;
+};
+
 const UI = {
   render: () => {
     const p = State.p;
     const c = DB.classes[p.class];
+    const stats = getStats();
     
     document.getElementById('ui-lvl').innerText = p.lvl;
     document.getElementById('ui-gold').innerText = p.gold;
     document.getElementById('ui-class').innerText = c ? c.name : '';
     
-    // Stats & Points
-    document.getElementById('val-str').innerText = p.str;
-    document.getElementById('val-agi').innerText = p.agi;
-    document.getElementById('val-int').innerText = p.int;
+    // Stats
+    document.getElementById('val-str').innerText = stats.str;
+    document.getElementById('val-agi').innerText = stats.agi;
+    document.getElementById('val-int').innerText = stats.int;
+    
+    // Mount Badge
+    const mBadge = document.getElementById('ui-mount');
+    if(p.mount) {
+      const m = DB.mounts[p.mount];
+      mBadge.innerHTML = `<span style="font-size:24px">${m.e}</span> <div><b style="color:var(--gold)">${m.name}</b><br><small style="color:#aaa">${m.desc}</small></div>`;
+      mBadge.classList.remove('hidden');
+    } else mBadge.classList.add('hidden');
     
     const ptsBtn = document.querySelectorAll('.stat-btn');
     const ptsBadge = document.getElementById('ui-points');
@@ -317,7 +350,6 @@ const UI = {
     setBar('mp', p.mp, p.maxMp);
     setBar('xp', p.xp, p.lvl*150);
 
-    // Enemy HUD
     const hud = document.getElementById('enemy-hud');
     if(State.combat) {
       hud.style.opacity = '1';
@@ -326,11 +358,9 @@ const UI = {
       document.getElementById('enemy-hp-bar').style.width = pct + '%';
     } else hud.style.opacity = '0';
 
-    // Quests with Reward Button
     const qBox = document.getElementById('ui-quests');
     qBox.innerHTML = '';
     DB.quests.forEach(q => {
-      // Logic for quests: 0=not started, 1..N=progress, 'done'=claimed
       const cur = State.q[q.target] || 0; 
       const claimed = cur === 'done';
       const val = claimed ? q.count : cur;
@@ -338,10 +368,7 @@ const UI = {
       
       let html = `<div class="quest-card ${claimed?'done':(ready?'ready':'')}">`;
       html += `<div><span>${claimed?'✅':(ready?'⭐':'⬜')} <b>${q.title}</b></span><br><small>(${DB.mobs[q.target].e}) ${Math.min(val,q.count)}/${q.count}</small></div>`;
-      
-      if(ready) {
-        html += `<button class="btn btn-sm" style="background:var(--gold);color:#000" onclick="Core.claimQuest('${q.id}')">RESGATAR</button>`;
-      }
+      if(ready) html += `<button class="btn btn-sm" style="background:var(--gold);color:#000" onclick="Core.claimQuest('${q.id}')">RESGATAR</button>`;
       html += `</div>`;
       qBox.innerHTML += html;
     });
@@ -461,27 +488,25 @@ const UI = {
 
 const Core = {
   init: () => {
-    const s = localStorage.getItem('rpg_v7_stats');
+    const s = localStorage.getItem('rpg_v8_legends');
     if(s) { State = JSON.parse(s); Core.travel(State.loc); UI.log('Jogo carregado.'); } 
     else { UI.openModal('class'); }
     UI.render();
   },
-  save: () => { localStorage.setItem('rpg_v7_stats', JSON.stringify(State)); UI.render(); },
-  resetGame: () => { if(confirm('Apagar tudo?')){ localStorage.removeItem('rpg_v7_stats'); location.reload(); } },
+  save: () => { localStorage.setItem('rpg_v8_legends', JSON.stringify(State)); UI.render(); },
+  resetGame: () => { if(confirm('Apagar tudo?')){ localStorage.removeItem('rpg_v8_legends'); location.reload(); } },
 
   setClass: (k) => {
     const c = DB.classes[k];
     State.p.class = k;
-    Object.assign(State.p, { maxHp:c.hp, hp:c.hp, maxMp:c.mp, mp:c.mp, str:c.str, agi:c.agi, int:c.int });
+    Object.assign(State.p, { maxHp:c.hp, hp:c.hp, maxMp:c.mp, mp:c.mp, str:c.str, agi:c.agi, int:c.int, mount:null });
     State.p.inv = { pot:3 };
     UI.closeModal(); Core.travel('town');
   },
 
   addStat: (stat) => {
     if(State.p.points > 0) {
-      State.p[stat]++;
-      State.p.points--;
-      // Efeito imediato: INT aumenta MaxMP
+      State.p[stat]++; State.p.points--;
       if(stat==='int') State.p.maxMp += 10;
       UI.log(`Aumentou ${stat.toUpperCase()}!`);
       Core.save();
@@ -536,7 +561,6 @@ const Core = {
     }
   },
 
-  // --- COMBATE DUELO ---
   startCombat: (key) => {
     const m = DB.mobs[key];
     State.combat = { e: { ...m, maxHp:m.hp }, turn: 0 };
@@ -564,15 +588,15 @@ const Core = {
   act: (type, skKey) => {
     if(!State.combat) return;
     const p = State.p;
-    
     if(type === 'skill') {
       if(p.mp < DB.skills[skKey].cost) { UI.log('Sem mana!'); return; }
       p.mp -= DB.skills[skKey].cost;
     }
-
-    // DUELO: D20 + AGI/2
-    const pRoll = Dice.d20() + Math.floor(p.agi/2);
-    const eRoll = Dice.d20(); // Inimigos ainda puros (ou podemos adicionar agi deles no futuro)
+    
+    const stats = getStats();
+    // DUELO: D20 + AGI Total/2
+    const pRoll = Dice.d20() + Math.floor(stats.agi/2);
+    const eRoll = Dice.d20(); 
     
     Core.renderBtns(true);
     UI.rollDuelAnim(pRoll, eRoll, () => {
@@ -584,12 +608,11 @@ const Core = {
     const p = State.p;
     const e = State.combat.e;
     const w = DB.weapons[p.wpn];
+    const stats = getStats();
     
     if(pRoll >= eRoll) {
-      // VENCEU DUELO
       if(type === 'atk') {
-        // Dano = Arma + STR
-        let dmg = Dice.roll(w.min, w.max) + p.str + Math.floor(p.lvl/2);
+        let dmg = Dice.roll(w.min, w.max) + stats.str + Math.floor(p.lvl/2);
         if(pRoll >= 20) { dmg = Math.floor(dmg*1.5); UI.fxFloat('CRIT!','crit'); }
         e.hp -= dmg;
         UI.log(`Causou <b>${dmg}</b> dano.`);
@@ -598,21 +621,18 @@ const Core = {
       else if(type === 'skill') {
         const s = DB.skills[skKey];
         if(s.type === 'heal') {
-          // Cura = Base + INT
-          let heal = s.val + (p.int * 2);
+          let heal = s.val + (stats.int * 2);
           p.hp = Math.min(p.maxHp, p.hp + heal);
           UI.log(`Curou ${heal} HP.`);
           UI.fxFloat('❤','crit');
         } else {
-          // Magia = Base + INT
-          let base = Dice.roll(1, s.dice) + s.bonus + (p.int * 2);
+          let base = Dice.roll(1, s.dice) + s.bonus + (stats.int * 2);
           e.hp -= base;
           UI.log(`✨ ${s.name}: <b>${base}</b> dano.`);
           UI.fxFloat(base,'var(--mp)');
         }
       }
     } else {
-      // PERDEU DUELO
       UI.log(`❌ Inimigo venceu o duelo!`, 'color:var(--hp)');
       const armor = DB.armors[p.arm].def;
       let dmg = Math.max(0, (e.atk + Dice.roll(-2, 2)) - armor);
@@ -644,18 +664,16 @@ const Core = {
     State.p.gold += e.gold;
     State.p.xp += e.xp;
     
-    // Quest update
     let key = Object.keys(DB.mobs).find(k => DB.mobs[k].name === e.name);
     if(key && State.q[key] !== 'done') {
       State.q[key] = (State.q[key]||0) + 1;
     }
 
-    // Level
     if(State.p.xp >= State.p.lvl * 150) {
       State.p.xp = 0; State.p.lvl++;
-      State.p.points += 3; // GANHA PONTOS
+      State.p.points += 3;
       State.p.maxHp += 10; State.p.hp = State.p.maxHp;
-      UI.log(`🆙 LEVEL UP! +3 Pontos de Atributo!`);
+      UI.log(`🆙 LEVEL UP! +3 Pontos!`);
       UI.fxFloat('LEVEL UP!','crit');
     }
 
@@ -669,7 +687,7 @@ const Core = {
   claimQuest: (qid) => {
     const q = DB.quests.find(x => x.id === qid);
     if(q) {
-      State.q[q.target] = 'done'; // Mark as claimed
+      State.q[q.target] = 'done';
       State.p.gold += q.reward_g;
       State.p.xp += q.reward_xp;
       State.tempReward = { g:q.reward_g, x:q.reward_xp };
@@ -699,17 +717,52 @@ const Core = {
     const ct = document.getElementById('modal-content');
     const tt = document.getElementById('modal-title');
     document.getElementById('modal-overlay').style.display = 'flex';
-    tt.innerText = 'Mercador Caro';
-    ct.innerHTML = '';
-    for(let k in DB.items) {
-      const it = DB.items[k];
-      if(!it.dmg) ct.innerHTML += `<div class="card-item" onclick="Core.buy('item','${k}')"><span>${it.e} ${it.name}</span> <b>${it.val}🪙</b></div>`;
+    tt.innerText = 'Mercador';
+    ct.innerHTML = `
+      <div class="tab-menu">
+        <div class="tab-btn active" onclick="Core.renderShopTab('items')">Itens</div>
+        <div class="tab-btn" onclick="Core.renderShopTab('gear')">Equip</div>
+        <div class="tab-btn" onclick="Core.renderShopTab('mounts')">Mounts</div>
+      </div>
+      <div id="shop-body"></div>
+    `;
+    Core.renderShopTab('items');
+  },
+
+  renderShopTab: (tab) => {
+    // Highlight tabs
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.toggle('active', b.innerText.toLowerCase().includes(tab==='gear'?'equip':tab));
+    });
+
+    const body = document.getElementById('shop-body');
+    body.innerHTML = '';
+    
+    if(tab === 'items') {
+      for(let k in DB.items) {
+        const it = DB.items[k];
+        if(!it.dmg || k==='bomb') body.innerHTML += `<div class="card-item" onclick="Core.buy('item','${k}')"><span>${it.e} ${it.name} <small>${it.desc}</small></span> <b>${it.val}🪙</b></div>`;
+      }
     }
-    ct.innerHTML += '<hr style="border-color:#555">';
-    const nw = DB.weapons[State.p.wpn+1];
-    if(nw) ct.innerHTML += `<div class="card-item" onclick="Core.buy('wpn')"><span>⚔️ ${nw.name} (${nw.min}-${nw.max})</span> <b>${nw.cost}🪙</b></div>`;
-    const na = DB.armors[State.p.arm+1];
-    if(na) ct.innerHTML += `<div class="card-item" onclick="Core.buy('arm')"><span>🛡️ ${na.name} (+${na.def})</span> <b>${na.cost}🪙</b></div>`;
+    else if(tab === 'gear') {
+      const nw = DB.weapons[State.p.wpn+1];
+      if(nw) body.innerHTML += `<div class="card-item" onclick="Core.buy('wpn')"><span>⚔️ ${nw.name} (${nw.min}-${nw.max})</span> <b>${nw.cost}🪙</b></div>`;
+      else body.innerHTML += `<div class="card-item"><span>⚔️ Arma Máxima!</span></div>`;
+      
+      const na = DB.armors[State.p.arm+1];
+      if(na) body.innerHTML += `<div class="card-item" onclick="Core.buy('arm')"><span>🛡️ ${na.name} (+${na.def})</span> <b>${na.cost}🪙</b></div>`;
+      else body.innerHTML += `<div class="card-item"><span>🛡️ Armadura Máxima!</span></div>`;
+    }
+    else if(tab === 'mounts') {
+      for(let k in DB.mounts) {
+        const m = DB.mounts[k];
+        const owned = State.p.mount === k;
+        body.innerHTML += `<div class="card-item" style="${owned?'border:1px solid var(--gold)':''}" onclick="Core.buy('mount','${k}')">
+          <div class="row"><span style="font-size:24px">${m.e}</span> <div><b>${m.name}</b><br><small>${m.desc}</small></div></div>
+          ${owned ? '<b>✅</b>' : `<b>${m.cost}🪙</b>`}
+        </div>`;
+      }
+    }
   },
 
   buy: (type, k) => {
@@ -717,13 +770,19 @@ const Core = {
     if(type === 'item') {
       const it = DB.items[k];
       if(p.gold >= it.val) { p.gold-=it.val; p.inv[k]=(p.inv[k]||0)+1; UI.log('Comprou item.'); }
-    } else {
+    } 
+    else if(type === 'mount') {
+      const m = DB.mounts[k];
+      if(p.mount === k) { UI.log('Já possui.'); return; }
+      if(p.gold >= m.cost) { p.gold-=m.cost; p.mount=k; UI.log(`Comprou ${m.name}!`); Core.renderShopTab('mounts'); }
+    }
+    else {
       const list = type==='wpn'?DB.weapons:DB.armors;
       const idx = type==='wpn'?p.wpn:p.arm;
       const it = list[idx+1];
-      if(p.gold >= it.cost) { p.gold-=it.cost; if(type==='wpn') p.wpn++; else p.arm++; UI.log('Upgrade comprado!'); }
+      if(it && p.gold >= it.cost) { p.gold-=it.cost; if(type==='wpn') p.wpn++; else p.arm++; UI.log('Upgrade comprado!'); Core.renderShopTab('gear'); }
     }
-    Core.openShop(); Core.save();
+    Core.save();
   }
 };
 
