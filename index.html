@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RPG Emojis 9.0: Arsenal de Classes</title>
+<title>RPG Emojis 10.0: Arena Online</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
 <style>
   :root{
@@ -93,6 +96,12 @@
   .quest-card.done { border-color:var(--xp); opacity:0.5; text-decoration:line-through; }
   @keyframes pulseQ { 0%{box-shadow:inset 0 0 0 transparent} 50%{box-shadow:inset 0 0 10px rgba(251, 191, 36, 0.2)} }
 
+  /* RANKING */
+  .rank-row { display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #333; font-size:14px; }
+  .rank-row:nth-child(1) { color:var(--gold); font-weight:bold; font-size:16px; }
+  .rank-row:nth-child(2) { color:#e2e8f0; }
+  .rank-row:nth-child(3) { color:#ad7f58; }
+
   /* Modais */
   .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; z-index:100; }
   .modal-box { background:var(--panel); padding:24px; border-radius:16px; width:100%; max-width:500px; border:1px solid var(--border); max-height:85vh; overflow-y:auto; }
@@ -108,8 +117,9 @@
 
 <div id="app">
   <div class="header">
-    <div class="row"><span style="font-size:32px">⚔️</span> <div style="line-height:1.1"><b>Arsenal de Classes</b><br><small style="color:var(--gold); letter-spacing:1px; font-size:11px">RPG 9.0</small></div></div>
+    <div class="row"><span style="font-size:32px">🏆</span> <div style="line-height:1.1"><b>Arena Online</b><br><small style="color:var(--gold); letter-spacing:1px; font-size:11px">RPG 10.0</small></div></div>
     <div class="row">
+      <button class="btn" title="Ranking" onclick="Ranking.open()" style="border-color:var(--gold); color:var(--gold)">👑 Rank</button>
       <button class="btn" onclick="UI.openModal('inv')">🎒 Inv</button>
       <button class="btn" onclick="UI.openModal('map')">🗺️ Mapa</button>
       <button class="btn" style="border-color:var(--hp); color:var(--hp)" onclick="Core.resetGame()">✕</button>
@@ -223,6 +233,105 @@
 </div>
 
 <script>
+// --- CONFIGURAÇÃO FIREBASE ---
+// PARA ATIVAR O ONLINE REAL:
+// 1. Crie um projeto no firebase.google.com
+// 2. Crie um banco Firestore em "Test Mode".
+// 3. Copie as chaves do seu projeto e cole abaixo.
+const firebaseConfig = {
+  // apiKey: "SUA_API_KEY_AQUI",
+  // authDomain: "SEU_PROJETO.firebaseapp.com",
+  // projectId: "SEU_PROJETO_ID",
+  // storageBucket: "SEU_PROJETO.appspot.com",
+  // messagingSenderId: "NUMERO",
+  // appId: "APP_ID"
+};
+
+let db = null;
+try {
+  if(firebaseConfig.apiKey) {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    console.log("Firebase Conectado!");
+  }
+} catch(e) { console.log("Modo Offline (Sem Firebase)"); }
+
+// --- LÓGICA DO RANKING ---
+const Ranking = {
+  open: async () => {
+    const ct = document.getElementById('modal-content');
+    const tt = document.getElementById('modal-title');
+    document.getElementById('modal-overlay').style.display = 'flex';
+    tt.innerText = '🏆 Ranking de Lendas';
+    ct.innerHTML = '<div style="text-align:center; padding:20px">Carregando Campeões...</div>';
+    
+    let scores = [];
+
+    // Tenta pegar do Firebase
+    if(db) {
+      try {
+        const snap = await db.collection("scores").orderBy("lvl", "desc").limit(10).get();
+        snap.forEach(doc => scores.push(doc.data()));
+      } catch(e) { console.log("Erro no DB", e); }
+    } else {
+      // DADOS MOCKADOS (SIMULAÇÃO PARA QUANDO NÃO TIVER INTERNET/CONFIG)
+      scores = [
+        { name: "Lenda_Do_RPG", lvl: 50, gold: 99999 },
+        { name: "MatadorDeDragão", lvl: 42, gold: 50000 },
+        { name: "MagoSupremo", lvl: 35, gold: 12000 },
+        { name: "GuerreiroZ", lvl: 20, gold: 5000 },
+        { name: "NoobMaster", lvl: 5, gold: 100 }
+      ];
+      // Adiciona o jogador atual para comparação
+      scores.push({ name: State.p.name + " (Você)", lvl: State.p.lvl, gold: State.p.gold });
+      scores.sort((a,b) => b.lvl - a.lvl);
+    }
+
+    let html = `<div style="display:flex; flex-direction:column; gap:8px">`;
+    html += `<div style="text-align:center; margin-bottom:10px; font-size:12px; color:#888">${db ? '🟢 Conectado à Nuvem' : '🔴 Modo Offline (Simulação)'}</div>`;
+    
+    scores.forEach((s, i) => {
+      let icon = '👤';
+      if(i===0) icon = '👑'; else if(i===1) icon = '🥈'; else if(i===2) icon = '🥉';
+      html += `
+        <div class="rank-row" style="${s.name.includes('(Você)')?'border-color:var(--accent); background:rgba(56,189,248,0.1)':''}">
+          <div style="width:30px">${icon}</div>
+          <div style="flex:1">${s.name}</div>
+          <div style="width:100px; text-align:right">Lvl ${s.lvl} <span style="color:var(--gold)">(${s.gold}🪙)</span></div>
+        </div>`;
+    });
+    
+    html += `</div>`;
+    html += `<div style="margin-top:20px; border-top:1px solid #444; padding-top:10px;">
+      <input type="text" id="rank-name" placeholder="Seu Nick" value="${State.p.name}" style="background:#111; color:#fff; border:1px solid #555; padding:8px; width:60%">
+      <button class="btn" style="display:inline-flex" onclick="Ranking.save()">Salvar Score</button>
+    </div>`;
+    
+    ct.innerHTML = html;
+  },
+
+  save: async () => {
+    const nick = document.getElementById('rank-name').value || "Anônimo";
+    State.p.name = nick;
+    Core.save();
+    
+    if(db) {
+      try {
+        await db.collection("scores").add({
+          name: nick,
+          lvl: State.p.lvl,
+          gold: State.p.gold,
+          date: new Date()
+        });
+        alert("Score salvo na nuvem!");
+        Ranking.open(); // Recarrega
+      } catch(e) { alert("Erro ao salvar online."); }
+    } else {
+      alert("Score salvo localmente! (Configure o Firebase para salvar online)");
+    }
+  }
+};
+
 const DB = {
   classes: {
     warrior: { name:'Guerreiro', e:'⚔️', hp:150, mp:20, str:4, agi:1, int:1, desc:'Forte e Resistente.' },
@@ -261,7 +370,7 @@ const DB = {
     ether:{ name:'Éter Mana', e:'🔷', val:25, effect:p=>p.mp=Math.min(p.maxMp, p.mp+40), desc:'+40 MP' },
     bomb: { name:'Bomba',     e:'💣', val:50, dmg:50, desc:'50 Dano Fixo' }
   },
-  // SISTEMA DE GEAR POR CLASSE
+  // GEAR
   gear: {
     weapons: {
       warrior: [{n:'Punhos',v:1,x:3},{n:'Espada Ferruja',v:5,x:8,c:100},{n:'Espada Ferro',v:10,x:15,c:350},{n:'Montante',v:15,x:25,c:900},{n:'Matadora',v:25,x:40,c:2500},{n:'Excalibur',v:50,x:70,c:8000}],
@@ -290,7 +399,6 @@ const DB = {
     fire: { name:'Fogo',  cost:10, bonus:8, dice:20 },
     heal: { name:'Cura',  cost:12, val:50, type:'heal' }
   },
-  // MONTARIAS BALANCEADAS
   mounts: {
     horse: { name:'Cavalo', e:'🐎', cost:200, agi:2, str:0, desc:'+2 AGI (Barato e rápido)' },
     wolf:  { name:'Warg',   e:'🐺', cost:600, agi:3, str:2, desc:'+3 AGI, +2 FOR (Agressivo)' },
@@ -321,10 +429,8 @@ const getStats = () => {
   return s;
 };
 
-// Pega item atual baseado na classe
 const getGear = () => {
   const p = State.p;
-  // Fallback para warrior se der erro, mas não deve dar
   const c = p.class || 'warrior';
   const w = DB.gear.weapons[c][p.wpn] || DB.gear.weapons[c][0];
   const a = DB.gear.armors[c][p.arm] || DB.gear.armors[c][0];
@@ -346,21 +452,15 @@ const UI = {
     document.getElementById('val-agi').innerText = stats.agi;
     document.getElementById('val-int').innerText = stats.int;
     
-    // Mount
     const mBadge = document.getElementById('ui-mount');
-    const mIcon = document.getElementById('mnt-icon');
-    const mName = document.getElementById('mnt-name');
-    const mDesc = document.getElementById('mnt-desc');
-    
-    if(p.mount && DB.mounts[p.mount]) {
+    if(p.mount) {
       const m = DB.mounts[p.mount];
-      mIcon.innerText = m.e;
-      mName.innerText = m.name;
-      mDesc.innerText = m.desc;
+      document.getElementById('mnt-icon').innerText = m.e;
+      document.getElementById('mnt-name').innerText = m.name;
+      document.getElementById('mnt-desc').innerText = m.desc;
       mBadge.classList.remove('hidden');
     } else mBadge.classList.add('hidden');
     
-    // Points
     const ptsBtn = document.querySelectorAll('.stat-btn');
     const ptsBadge = document.getElementById('ui-points');
     if(p.points > 0) {
@@ -372,7 +472,6 @@ const UI = {
       ptsBtn.forEach(b => b.classList.add('hidden'));
     }
 
-    // Bars
     const setBar = (id, cur, max) => {
       document.getElementById(`ui-${id}-txt`).innerText = `${Math.floor(cur)}/${max}`;
       document.getElementById(`bar-${id}`).style.width = Math.min(100, (cur/max)*100) + '%';
@@ -381,13 +480,11 @@ const UI = {
     setBar('mp', p.mp, p.maxMp);
     setBar('xp', p.xp, p.lvl*150);
 
-    // Gear UI
     document.getElementById('ui-wpn-name').innerText = g.w.n;
     document.getElementById('ui-wpn-dmg').innerText = `${g.w.v}-${g.w.x} dmg`;
     document.getElementById('ui-arm-name').innerText = g.a.n;
     document.getElementById('ui-arm-def').innerText = `+${g.a.v} def`;
 
-    // Combat HUD
     const hud = document.getElementById('enemy-hud');
     if(State.combat) {
       hud.style.opacity = '1';
@@ -396,7 +493,6 @@ const UI = {
       document.getElementById('enemy-hp-bar').style.width = pct + '%';
     } else hud.style.opacity = '0';
 
-    // Quests
     const qBox = document.getElementById('ui-quests');
     qBox.innerHTML = '';
     DB.quests.forEach(q => {
@@ -527,13 +623,13 @@ const UI = {
 
 const Core = {
   init: () => {
-    const s = localStorage.getItem('rpg_v9_classgear');
+    const s = localStorage.getItem('rpg_v10_final');
     if(s) { State = JSON.parse(s); Core.travel(State.loc); UI.log('Jogo carregado.'); } 
     else { UI.openModal('class'); }
     UI.render();
   },
-  save: () => { localStorage.setItem('rpg_v9_classgear', JSON.stringify(State)); UI.render(); },
-  resetGame: () => { if(confirm('Apagar tudo?')){ localStorage.removeItem('rpg_v9_classgear'); location.reload(); } },
+  save: () => { localStorage.setItem('rpg_v10_final', JSON.stringify(State)); UI.render(); },
+  resetGame: () => { if(confirm('Apagar tudo?')){ localStorage.removeItem('rpg_v10_final'); location.reload(); } },
 
   setClass: (k) => {
     const c = DB.classes[k];
@@ -651,7 +747,6 @@ const Core = {
     
     if(pRoll >= eRoll) {
       if(type === 'atk') {
-        // Dano = Weapon + (Mage usa INT, outros usam STR)
         let attr = p.class === 'mage' ? stats.int : stats.str;
         let dmg = Dice.roll(gear.w.v, gear.w.x) + attr + Math.floor(p.lvl/2);
         
