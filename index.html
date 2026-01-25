@@ -1,11 +1,10 @@
-
 <!doctype html>
 <html lang="pt-br">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="theme-color" content="#0f172a">
-<title>Reflexo e Caos: Mobile v12.5 (Expansão)</title>
+<title>Reflexo e Caos: Mobile v13.0 (Alquimia)</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -16,6 +15,7 @@
     --btn:#334155; --btnHover:#475569; --border:#475569;
     --hp:#ef4444; --mp:#60a5fa; --xp:#22c55e; --gold:#fbbf24;
     --crit:#facc15; --miss:#94a3b8; --dmg:#f87171;
+    --mythic:#d946ef;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
   
@@ -33,7 +33,7 @@
   body.theme-graveyard { background: linear-gradient(to bottom, #312e81, #1e1b4b); }
   body.theme-volcano { background: linear-gradient(to bottom, #7f1d1d, #450a0a); }
   body.theme-void { background: linear-gradient(to bottom, #000000, #2d0036); }
-  body.theme-frozen { background: linear-gradient(to bottom, #bae6fd, #0284c7); color:#000; } /* Tema claro */
+  body.theme-frozen { background: linear-gradient(to bottom, #bae6fd, #0284c7); color:#000; }
   body.theme-desert { background: linear-gradient(to bottom, #fde047, #ca8a04); color:#000; }
   body.theme-ocean { background: linear-gradient(to bottom, #1e3a8a, #172554); }
   body.theme-heaven { background: linear-gradient(to bottom, #e0f2fe, #ffffff); color:#000; }
@@ -97,7 +97,7 @@
   .enemy-bar-bg { height:10px; background:#000; border-radius:5px; overflow:hidden; border:1px solid #555; }
   .enemy-bar-fill { height:100%; background:#ef4444; width:100%; transition:width 0.2s; }
 
-  /* DUELO - SISTEMA DE REFLEXO */
+  /* DUELO */
   #duel-overlay { 
     position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:2000; 
     display:none; flex-direction:column; align-items:center; justify-content:center; 
@@ -139,6 +139,9 @@
   .tab-btn { flex:1; padding:12px; background:#111; border:1px solid #444; color:#888; cursor:pointer; text-align:center; border-radius:8px; font-weight:600; }
   .tab-btn.active { background:var(--accent); color:#000; border-color:var(--accent); }
   .rank-row { display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #333; font-size:15px; }
+
+  /* Refino */
+  .refine-level { color:var(--mythic); font-weight:bold; font-size:12px; background:rgba(217, 70, 239, 0.1); padding:2px 6px; border-radius:4px; border:1px solid var(--mythic); margin-left:5px; }
 </style>
 </head>
 <body>
@@ -147,12 +150,11 @@
   <div id="reflex-light" class="reflex-light"></div>
   <div id="reflex-msg" class="reflex-msg">PREPARE-SE...</div>
   <div class="reflex-sub">Toque APENAS quando ficar verde</div>
-  <div id="reflex-debug" style="position:absolute; bottom:20px; color:#555; font-size:12px"></div>
 </div>
 
 <div id="app">
   <div class="header">
-    <div class="row"><span style="font-size:28px">⚡</span> <div style="line-height:1.1"><b>Reflexo & Caos</b><br><small style="color:var(--gold); font-size:11px">ONLINE v12.5</small></div></div>
+    <div class="row"><span style="font-size:28px">⚡</span> <div style="line-height:1.1"><b>Reflexo & Caos</b><br><small style="color:var(--gold); font-size:11px">ONLINE v13.0</small></div></div>
     <div class="row">
       <button class="btn" onclick="Ranking.open()" style="border-color:var(--gold); color:var(--gold)">🏆</button>
       <button class="btn" onclick="UI.openModal('inv')">🎒</button>
@@ -333,7 +335,7 @@ const DB = {
     forest:    { name:'Floresta',   e:'🌲', lvl:1,  theme:'forest', type:'combat', mobs:['rat','wolf','thief'], desc:'Nível 1-4' },
     cave:      { name:'Caverna',    e:'🕸️', lvl:5,  theme:'cave', type:'combat', mobs:['bat','spider','orc'], desc:'Nível 5-9' },
     graveyard: { name:'Cemitério',  e:'⚰️', lvl:10, theme:'graveyard', type:'combat', mobs:['skel','zombie','ghost'], desc:'Nível 10-14' },
-    volcano:   { name:'Vulcão',     e:'🌋', lvl:15, theme:'volcano', type:'combat', mobs:['imp','golem','dragon'], desc:'Nível 15-19' },
+    volcano:   { name:'Vulcão',     e:'🌋', lvl:15, theme:'volcano', type:'combat', mobs:['imp','golem','dragon'], desc:'Nível 15-25' },
     frozen:    { name:'Tundra',     e:'❄️', lvl:25, theme:'frozen',  type:'combat', mobs:['penguin','bear','yeti'], desc:'Nível 25-29' },
     desert:    { name:'Deserto',    e:'🏜️', lvl:30, theme:'desert',  type:'combat', mobs:['snake','mummy','sphinx'], desc:'Nível 30-39' },
     ocean:     { name:'Oceano',     e:'🐙', lvl:40, theme:'ocean',   type:'combat', mobs:['shark','siren','kraken'], desc:'Nível 40-49' },
@@ -385,14 +387,15 @@ const DB = {
     mega: { name:'Mega Poção',e:'🍷', val:100, effect:p=>p.hp=Math.min(p.maxHp, p.hp+150), desc:'+150 HP' },
     elixir:{ name:'Elixir',   e:'🌟', val:300, effect:p=>{p.hp=p.maxHp;p.mp=p.maxMp}, desc:'FULL HP/MP' },
     ether:{ name:'Éter Mana', e:'🔷', val:25, effect:p=>p.mp=Math.min(p.maxMp, p.mp+40), desc:'+40 MP' },
-    bomb: { name:'Bomba',     e:'💣', val:50, dmg:50, desc:'50 Dano Fixo' }
+    bomb: { name:'Bomba',     e:'💣', val:50, dmg:50, desc:'50 Dano Fixo' },
+    shard:{ name:'Fragmento', e:'💎', val:0, desc:'Material de Refino' }
   },
   gear: {
     weapons: {
-      warrior: [{n:'Punhos',v:1,x:3},{n:'Espada Velha',v:5,x:8,c:100},{n:'Espada Ferro',v:10,x:15,c:350},{n:'Montante',v:15,x:25,c:900},{n:'Matadora',v:25,x:40,c:2500},{n:'Excalibur',v:50,x:70,c:8000},{n:'Lâmina Gelo',v:80,x:100,c:15000},{n:'Espada Divina',v:120,x:150,c:30000},{n:'Ragnarok',v:200,x:300,c:99999}],
-      rogue:   [{n:'Punhos',v:1,x:3},{n:'Adaga Cega',v:4,x:7,c:100},{n:'Adaga Dupla',v:8,x:14,c:350},{n:'Lâmina Sombra',v:12,x:22,c:900},{n:'Presa Veneno',v:20,x:35,c:2500},{n:'Fim dos Dias',v:45,x:65,c:8000},{n:'Garras Urso',v:70,x:90,c:15000},{n:'Adaga Luz',v:110,x:140,c:30000},{n:'Ceifadora',v:190,x:280,c:99999}],
-      mage:    [{n:'Mãos',v:1,x:3},{n:'Varinha Pau',v:4,x:8,c:100},{n:'Cajado Aprendiz',v:8,x:14,c:350},{n:'Cajado Rúnico',v:14,x:24,c:900},{n:'Cetro Vazio',v:22,x:38,c:2500},{n:'Cosmos',v:48,x:68,c:8000},{n:'Cajado Gelo',v:75,x:95,c:15000},{n:'Cetro Anjo',v:115,x:145,c:30000},{n:'Apocalipse',v:210,x:310,c:99999}],
-      paladin: [{n:'Punhos',v:1,x:3},{n:'Maça Madeira',v:4,x:7,c:100},{n:'Martelo Ferro',v:9,x:14,c:350},{n:'Mangual',v:13,x:23,c:900},{n:'Martelo Luz',v:23,x:38,c:2500},{n:'Mjolnir',v:48,x:68,c:8000},{n:'Estrela Manhã',v:75,x:100,c:15000},{n:'Justiça',v:115,x:150,c:30000},{n:'Deus Ex',v:200,x:300,c:99999}]
+      warrior: [{n:'Punhos',v:1,x:3},{n:'Espada Velha',v:5,x:8,c:100,st:{str:1}},{n:'Espada Ferro',v:10,x:15,c:350,st:{str:2}},{n:'Montante',v:15,x:25,c:900,st:{str:4}},{n:'Matadora',v:25,x:40,c:2500,st:{str:6}},{n:'Excalibur',v:50,x:70,c:8000,st:{str:10}},{n:'Lâmina Gelo',v:80,x:100,c:15000,st:{str:15}},{n:'Espada Divina',v:120,x:150,c:30000,st:{str:20}},{n:'Ragnarok',v:200,x:300,c:99999,st:{str:30}}],
+      rogue:   [{n:'Punhos',v:1,x:3},{n:'Adaga Cega',v:4,x:7,c:100,st:{agi:1}},{n:'Adaga Dupla',v:8,x:14,c:350,st:{agi:2}},{n:'Lâmina Sombra',v:12,x:22,c:900,st:{agi:4}},{n:'Presa Veneno',v:20,x:35,c:2500,st:{agi:6}},{n:'Fim dos Dias',v:45,x:65,c:8000,st:{agi:10}},{n:'Garras Urso',v:70,x:90,c:15000,st:{agi:15}},{n:'Adaga Luz',v:110,x:140,c:30000,st:{agi:20}},{n:'Ceifadora',v:190,x:280,c:99999,st:{agi:30}}],
+      mage:    [{n:'Mãos',v:1,x:3},{n:'Varinha Pau',v:4,x:8,c:100,st:{int:1}},{n:'Cajado Aprendiz',v:8,x:14,c:350,st:{int:2}},{n:'Cajado Rúnico',v:14,x:24,c:900,st:{int:4}},{n:'Cetro Vazio',v:22,x:38,c:2500,st:{int:6}},{n:'Cosmos',v:48,x:68,c:8000,st:{int:10}},{n:'Cajado Gelo',v:75,x:95,c:15000,st:{int:15}},{n:'Cetro Anjo',v:115,x:145,c:30000,st:{int:20}},{n:'Apocalipse',v:210,x:310,c:99999,st:{int:30}}],
+      paladin: [{n:'Punhos',v:1,x:3},{n:'Maça Madeira',v:4,x:7,c:100,st:{str:1}},{n:'Martelo Ferro',v:9,x:14,c:350,st:{str:2}},{n:'Mangual',v:13,x:23,c:900,st:{str:4}},{n:'Martelo Luz',v:23,x:38,c:2500,st:{str:6}},{n:'Mjolnir',v:48,x:68,c:8000,st:{str:10}},{n:'Estrela Manhã',v:75,x:100,c:15000,st:{str:15}},{n:'Justiça',v:115,x:150,c:30000,st:{str:20}},{n:'Deus Ex',v:200,x:300,c:99999,st:{str:30}}]
     },
     armors: {
       warrior: [{n:'Camisa',v:0},{n:'Couro Batido',v:3,c:100},{n:'Cota Malha',v:7,c:350},{n:'Peitoral Aço',v:14,c:900},{n:'Placas Dragão',v:22,c:2500},{n:'Armadura Deus',v:35,c:8000},{n:'Gelo Eterno',v:50,c:15000},{n:'Placas Sol',v:70,c:30000},{n:'Caos Absoluto',v:100,c:99999}],
@@ -404,19 +407,33 @@ const DB = {
   quests: [
     { id:'q1', target:'rat', count:5, title:'Dedetização', reward_g:100, reward_xp:100 },
     { id:'q2', target:'wolf', count:10, title:'Caça Lobos', reward_g:200, reward_xp:250 },
-    { id:'q3', target:'orc', count:8, title:'Limpeza', reward_g:400, reward_xp:500 },
-    { id:'q4', target:'skel', count:15, title:'Quebra-Ossos', reward_g:800, reward_xp:1000 },
-    { id:'q5', target:'golem', count:5, title:'Pedras', reward_g:2000, reward_xp:2500 },
-    { id:'q6', target:'dragon', count:1, title:'Matador', reward_g:5000, reward_xp:5000 },
-    { id:'q7', target:'penguin', count:10, title:'Pinguins!', reward_g:3000, reward_xp:3000 },
-    { id:'q8', target:'yeti', count:5, title:'Abominável', reward_g:5000, reward_xp:5000 },
-    { id:'q9', target:'snake', count:15, title:'Veneno', reward_g:7000, reward_xp:7000 },
-    { id:'q10', target:'sphinx', count:3, title:'Enigma', reward_g:10000, reward_xp:10000 },
-    { id:'q11', target:'kraken', count:1, title:'Lula Gigante', reward_g:15000, reward_xp:15000 },
-    { id:'q12', target:'angel', count:10, title:'Caído', reward_g:20000, reward_xp:20000 },
-    { id:'q13', target:'zeus', count:1, title:'Deicídio', reward_g:30000, reward_xp:30000 },
-    { id:'q14', target:'demon', count:20, title:'Expurgo', reward_g:40000, reward_xp:40000 },
-    { id:'q15', target:'lucifer', count:1, title:'O Diabo', reward_g:100000, reward_xp:100000 }
+    { id:'q3', target:'thief', count:8, title:'Roubo', reward_g:300, reward_xp:350 },
+    { id:'q4', target:'bat', count:10, title:'Vampiros?', reward_g:350, reward_xp:400 },
+    { id:'q5', target:'spider', count:12, title:'Aracnofobia', reward_g:400, reward_xp:450 },
+    { id:'q6', target:'orc', count:8, title:'Pele Verde', reward_g:400, reward_xp:500 },
+    { id:'q7', target:'skel', count:15, title:'Quebra-Ossos', reward_g:800, reward_xp:1000 },
+    { id:'q8', target:'zombie', count:20, title:'Morto-Vivo', reward_g:1000, reward_xp:1200 },
+    { id:'q9', target:'ghost', count:10, title:'Assombração', reward_g:1500, reward_xp:1500 },
+    { id:'q10', target:'imp', count:15, title:'Pragas', reward_g:1800, reward_xp:1800 },
+    { id:'q11', target:'golem', count:5, title:'Pedreiras', reward_g:2000, reward_xp:2500 },
+    { id:'q12', target:'dragon', count:1, title:'Matador', reward_g:5000, reward_xp:5000 },
+    { id:'q13', target:'penguin', count:10, title:'Pinguins!', reward_g:3000, reward_xp:3000 },
+    { id:'q14', target:'bear', count:5, title:'Hibernação', reward_g:3500, reward_xp:3500 },
+    { id:'q15', target:'yeti', count:5, title:'Abominável', reward_g:5000, reward_xp:5000 },
+    { id:'q16', target:'snake', count:15, title:'Soro', reward_g:7000, reward_xp:7000 },
+    { id:'q17', target:'mummy', count:10, title:'Sarcófago', reward_g:8000, reward_xp:8000 },
+    { id:'q18', target:'sphinx', count:3, title:'Enigma', reward_g:10000, reward_xp:10000 },
+    { id:'q19', target:'shark', count:10, title:'Barbatana', reward_g:11000, reward_xp:11000 },
+    { id:'q20', target:'siren', count:5, title:'Canto', reward_g:12000, reward_xp:12000 },
+    { id:'q21', target:'kraken', count:1, title:'Lula Gigante', reward_g:15000, reward_xp:15000 },
+    { id:'q22', target:'harpy', count:15, title:'Penas', reward_g:16000, reward_xp:16000 },
+    { id:'q23', target:'angel', count:10, title:'Caído', reward_g:20000, reward_xp:20000 },
+    { id:'q24', target:'zeus', count:1, title:'Deicídio', reward_g:30000, reward_xp:30000 },
+    { id:'q25', target:'demon', count:20, title:'Expurgo', reward_g:40000, reward_xp:40000 },
+    { id:'q26', target:'cerberus', count:3, title:'Cão Guia', reward_g:50000, reward_xp:50000 },
+    { id:'q27', target:'lucifer', count:1, title:'O Diabo', reward_g:100000, reward_xp:100000 },
+    { id:'q28', target:'shadow', count:30, title:'Escuridão', reward_g:150000, reward_xp:150000 },
+    { id:'q29', target:'voidking', count:1, title:'O Vazio', reward_g:999999, reward_xp:999999 }
   ],
   skills: {
     bash: { name:'Golpe', cost:5, bonus:5, dice:8 },
@@ -434,7 +451,7 @@ const DB = {
 };
 
 let State = {
-  p: { name:'Herói', class:null, lvl:1, xp:0, gold:0, hp:100, mp:50, maxHp:100, maxMp:50, wpn:0, arm:0, inv:{}, str:1, agi:1, int:1, points:0, mount:null },
+  p: { name:'Herói', class:null, lvl:1, xp:0, gold:0, hp:100, mp:50, maxHp:100, maxMp:50, wpn:0, arm:0, inv:{}, str:1, agi:1, int:1, points:0, mount:null, refineW:0 },
   loc: 'town',
   combat: null,
   q: {}
@@ -444,22 +461,33 @@ const Dice = {
   roll: (min, max) => Math.floor(Math.random()*(max-min+1))+min
 };
 
-const getStats = () => {
-  const p = State.p;
-  let s = { str:p.str, agi:p.agi, int:p.int };
-  if(p.mount && DB.mounts[p.mount]) {
-    const m = DB.mounts[p.mount];
-    s.str += (m.str||0); s.agi += (m.agi||0); s.int += (m.int||0);
-  }
-  return s;
-};
-
 const getGear = () => {
   const p = State.p;
   const c = p.class || 'warrior';
   const w = DB.gear.weapons[c][p.wpn] || DB.gear.weapons[c][DB.gear.weapons[c].length-1];
   const a = DB.gear.armors[c][p.arm] || DB.gear.armors[c][DB.gear.armors[c].length-1];
   return { w, a };
+};
+
+const getStats = () => {
+  const p = State.p;
+  let s = { str:p.str, agi:p.agi, int:p.int };
+  
+  // Mount Bonus
+  if(p.mount && DB.mounts[p.mount]) {
+    const m = DB.mounts[p.mount];
+    s.str += (m.str||0); s.agi += (m.agi||0); s.int += (m.int||0);
+  }
+
+  // Weapon Bonus (Novo)
+  const g = getGear();
+  if(g.w.st) {
+    if(g.w.st.str) s.str += g.w.st.str;
+    if(g.w.st.agi) s.agi += g.w.st.agi;
+    if(g.w.st.int) s.int += g.w.st.int;
+  }
+  
+  return s;
 };
 
 // --- LOGICA DE REFLEXO ---
@@ -605,8 +633,14 @@ const UI = {
     setBar('mp', p.mp, p.maxMp);
     setBar('xp', p.xp, p.lvl*150);
 
-    document.getElementById('ui-wpn-name').innerText = g.w.n;
-    document.getElementById('ui-wpn-dmg').innerText = `${g.w.v}-${g.w.x}`;
+    const refineTxt = p.refineW > 0 ? ` <span class="refine-level">+${p.refineW}</span>` : '';
+    document.getElementById('ui-wpn-name').innerHTML = g.w.n + refineTxt;
+    
+    // Mostra dano total (base + refine)
+    let dmgMin = g.w.v + (p.refineW * 2);
+    let dmgMax = g.w.x + (p.refineW * 3);
+    document.getElementById('ui-wpn-dmg').innerText = `${dmgMin}-${dmgMax}`;
+    
     document.getElementById('ui-arm-name').innerText = g.a.n;
     document.getElementById('ui-arm-def').innerText = `+${g.a.v}`;
 
@@ -684,14 +718,22 @@ const UI = {
     }
     else if(type === 'inv') {
       tt.innerText = 'Mochila';
+      // Itens normais
       for(let k in State.p.inv) {
-        if(State.p.inv[k]>0) {
+        if(State.p.inv[k]>0 && k !== 'shard') {
           const it = DB.items[k];
           ct.innerHTML += `<div class="card-item" onclick="Core.useItem('${k}')">
             <span>${it.e} ${it.name} (x${State.p.inv[k]})</span> <b>USAR</b>
           </div>`;
         }
       }
+      // Fragmentos (não usáveis diretamente)
+      if(State.p.inv.shard > 0) {
+        ct.innerHTML += `<div class="card-item" style="cursor:default; border:1px solid #555">
+           <span>💎 Fragmento (x${State.p.inv.shard})</span> <small>Refino</small>
+        </div>`;
+      }
+
       if(!ct.innerHTML) ct.innerHTML = '<div style="text-align:center;color:#666">Vazio.</div>';
     }
     else if(type === 'reward') {
@@ -704,25 +746,55 @@ const UI = {
         <button class="btn btn-big" onclick="UI.closeModal()">OK!</button>
       </div>`;
     }
+    else if(type === 'alchemist') {
+      tt.innerText = 'Alquimista';
+      const p = State.p;
+      const g = getGear();
+      const fragments = p.inv.shard || 0;
+      const costG = (p.refineW + 1) * 200;
+      const costF = (p.refineW + 1);
+      const isMax = p.refineW >= 15;
+
+      ct.innerHTML = `
+        <div style="text-align:center; padding:10px">
+          <div style="font-size:60px; margin-bottom:10px">⚗️</div>
+          <div style="font-size:18px; color:var(--accent)">${g.w.n} <b class="refine-level">+${p.refineW}</b></div>
+          <p style="color:#aaa; font-size:13px">Refinar aumenta o dano base da arma.</p>
+          
+          ${isMax ? '<h3 style="color:var(--mythic)">NÍVEL MÁXIMO!</h3>' : `
+            <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:12px; margin:20px 0">
+              <div class="row between" style="margin-bottom:5px"><span>Custo Ouro:</span> <b style="color:${p.gold>=costG?'var(--gold)':'#f55'}">${costG}</b></div>
+              <div class="row between"><span>Custo Frags:</span> <b style="color:${fragments>=costF?'var(--accent)':'#f55'}">${costF} / ${fragments}</b></div>
+            </div>
+            <button class="btn btn-big" style="background:var(--mythic); border-color:#a21caf" onclick="Core.refineWeapon()">Refinar (+${p.refineW+1})</button>
+          `}
+        </div>
+      `;
+    }
   },
   closeModal: () => document.getElementById('modal-overlay').style.display = 'none'
 };
 
 const Core = {
   init: () => {
-    const s = localStorage.getItem('rpg_v12_5_expand');
-    if(s) { State = JSON.parse(s); Core.travel(State.loc); UI.log('Retornou.'); } 
+    const s = localStorage.getItem('rpg_v13_alchemy');
+    if(s) { 
+      State = JSON.parse(s); 
+      // Fix save migration if needed
+      if(!State.p.refineW) State.p.refineW = 0;
+      Core.travel(State.loc); UI.log('Retornou.'); 
+    } 
     else { UI.openModal('class'); }
     UI.render();
   },
-  save: () => { localStorage.setItem('rpg_v12_5_expand', JSON.stringify(State)); UI.render(); },
-  resetGame: () => { if(confirm('Resetar?')){ localStorage.removeItem('rpg_v12_5_expand'); location.reload(); } },
+  save: () => { localStorage.setItem('rpg_v13_alchemy', JSON.stringify(State)); UI.render(); },
+  resetGame: () => { if(confirm('Resetar?')){ localStorage.removeItem('rpg_v13_alchemy'); location.reload(); } },
 
   setClass: (k) => {
     const c = DB.classes[k];
     State.p.class = k;
-    Object.assign(State.p, { maxHp:c.hp, hp:c.hp, maxMp:c.mp, mp:c.mp, str:c.str, agi:c.agi, int:c.int, mount:null, wpn:0, arm:0 });
-    State.p.inv = { pot:3 };
+    Object.assign(State.p, { maxHp:c.hp, hp:c.hp, maxMp:c.mp, mp:c.mp, str:c.str, agi:c.agi, int:c.int, mount:null, wpn:0, arm:0, refineW:0 });
+    State.p.inv = { pot:3, shard:0 };
     UI.closeModal(); Core.travel('town');
   },
 
@@ -752,6 +824,7 @@ const Core = {
       area.innerHTML = `
         <button class="btn btn-big" onclick="Core.rest()">🛌 Dormir</button>
         <button class="btn btn-big" onclick="Core.openShop()">💰 Loja</button>
+        <button class="btn btn-big" style="border-color:var(--mythic); color:var(--mythic)" onclick="UI.openModal('alchemist')">⚗️ Alquimista</button>
         <button class="btn btn-big" style="border-color:var(--xp)" onclick="UI.openModal('map')">🗺️ Viajar</button>
       `;
     } else {
@@ -831,7 +904,11 @@ const Core = {
     if(playerWin) {
       if(action.type === 'atk') {
         let attr = p.class === 'mage' ? stats.int : stats.str;
-        let dmg = Dice.roll(gear.w.v, gear.w.x) + attr + Math.floor(p.lvl/2);
+        // Refinement Bonus Calculation (+2 Min Damage, +3 Max Damage per level)
+        let minDmg = gear.w.v + (p.refineW * 2);
+        let maxDmg = gear.w.x + (p.refineW * 3);
+        
+        let dmg = Dice.roll(minDmg, maxDmg) + attr + Math.floor(p.lvl/2);
         if(Math.random() > 0.9) { dmg = Math.floor(dmg*1.5); UI.fxFloat('CRIT!','crit'); }
         e.hp -= dmg;
         UI.log(`Hit: <b>${dmg}</b>`);
@@ -875,11 +952,18 @@ const Core = {
     Core.save();
   },
 
-    win: () => {
+  win: () => {
     const e = State.combat.e;
     UI.log(`Vitória! +${e.gold}g`, 'xp');
     State.p.gold += e.gold;
     State.p.xp += e.xp;
+    
+    // DROP SYSTEM (Fragmentos)
+    if(Math.random() < 0.4) { // 40% chance
+      State.p.inv.shard = (State.p.inv.shard || 0) + 1;
+      UI.log('Drop: Fragmento', 'crit');
+      UI.fxFloat('💎', 'crit');
+    }
     
     // Checa missões
     let key = Object.keys(DB.mobs).find(k => DB.mobs[k].name === e.name);
@@ -887,11 +971,9 @@ const Core = {
       State.q[key] = (State.q[key]||0) + 1;
     }
 
-    // --- LÓGICA DE LEVEL UP ATUALIZADA ---
-    // Agora usamos "while" (enquanto) em vez de "if"
     let leveled = false;
     while(State.p.xp >= State.p.lvl * 150) {
-      State.p.xp -= State.p.lvl * 150; // Subtrai o custo e guarda a sobra
+      State.p.xp -= State.p.lvl * 150;
       State.p.lvl++;
       State.p.points += 3;
       State.p.maxHp += 10;
@@ -899,17 +981,35 @@ const Core = {
     }
 
     if(leveled) {
-      State.p.hp = State.p.maxHp; // Cura total ao upar
+      State.p.hp = State.p.maxHp;
       UI.log(`Level UP!`, 'crit');
       UI.fxFloat('UP!','crit');
     }
-    // -------------------------------------
 
     State.combat = null;
     UI.setScreen(e.e);
     setTimeout(() => {
       Core.travel(State.loc);
     }, 1200);
+  },
+  
+  refineWeapon: () => {
+    const p = State.p;
+    const costG = (p.refineW + 1) * 200;
+    const costF = (p.refineW + 1);
+    
+    if(p.refineW >= 15) return;
+    
+    if(p.gold >= costG && (p.inv.shard||0) >= costF) {
+      p.gold -= costG;
+      p.inv.shard -= costF;
+      p.refineW++;
+      UI.log(`Arma refinada para +${p.refineW}!`, 'crit');
+      Core.save();
+      UI.openModal('alchemist'); // refresh
+    } else {
+      UI.log('Recursos insuficientes.');
+    }
   },
 
   claimQuest: (qid) => {
@@ -969,7 +1069,7 @@ const Core = {
     if(tab === 'items') {
       for(let k in DB.items) {
         const it = DB.items[k];
-        if(!it.dmg || k==='bomb') body.innerHTML += `<div class="card-item" onclick="Core.buy('item','${k}')"><span>${it.e} ${it.name} <small>${it.desc}</small></span> <b>${it.val}🪙</b></div>`;
+        if((!it.dmg || k==='bomb') && k!=='shard') body.innerHTML += `<div class="card-item" onclick="Core.buy('item','${k}')"><span>${it.e} ${it.name} <small>${it.desc}</small></span> <b>${it.val}🪙</b></div>`;
       }
     }
     else if(tab === 'gear') {
@@ -1016,7 +1116,13 @@ const Core = {
       
       if(it && p.gold >= it.c) {
         p.gold -= it.c;
-        if(type==='wpn') p.wpn++; else p.arm++;
+        if(type==='wpn') { 
+          p.wpn++; 
+          p.refineW = 0; // Reset refino ao comprar arma nova
+          UI.log('Arma nova! Refino resetado.');
+        } else { 
+          p.arm++; 
+        }
         UI.log('Melhorou!');
         Core.renderShopTab('gear');
       } else {
