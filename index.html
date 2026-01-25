@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="theme-color" content="#0f172a">
-<title>Reflexo e Caos: Mobile v13.0 (Alquimia)</title>
+<title>Reflexo e Caos: Mobile v13.5 (Slots & Rank)</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -142,6 +142,11 @@
 
   /* Refino */
   .refine-level { color:var(--mythic); font-weight:bold; font-size:12px; background:rgba(217, 70, 239, 0.1); padding:2px 6px; border-radius:4px; border:1px solid var(--mythic); margin-left:5px; }
+  
+  /* Slots */
+  .slot-card { border:1px dashed #555; text-align:center; padding:20px; margin-bottom:10px; border-radius:12px; cursor:pointer; transition:0.2s; }
+  .slot-card:hover { border-color:var(--accent); background:rgba(255,255,255,0.05); }
+  .slot-card.filled { border-style:solid; border-color:var(--border); text-align:left; }
 </style>
 </head>
 <body>
@@ -154,12 +159,12 @@
 
 <div id="app">
   <div class="header">
-    <div class="row"><span style="font-size:28px">⚡</span> <div style="line-height:1.1"><b>Reflexo & Caos</b><br><small style="color:var(--gold); font-size:11px">ONLINE v13.0</small></div></div>
+    <div class="row"><span style="font-size:28px">⚡</span> <div style="line-height:1.1"><b>Reflexo & Caos</b><br><small style="color:var(--gold); font-size:11px">ONLINE v13.5</small></div></div>
     <div class="row">
       <button class="btn" onclick="Ranking.open()" style="border-color:var(--gold); color:var(--gold)">🏆</button>
       <button class="btn" onclick="UI.openModal('inv')">🎒</button>
       <button class="btn" onclick="UI.openModal('map')">🗺️</button>
-      <button class="btn" style="border-color:var(--hp); color:var(--hp)" onclick="Core.resetGame()">✕</button>
+      <button class="btn" style="border-color:var(--hp); color:var(--hp)" onclick="Core.exitToMenu()">✕</button>
     </div>
   </div>
 
@@ -186,6 +191,7 @@
         <span class="row">⭐ Lvl <b id="ui-lvl">1</b></span>
         <span class="row" style="color:var(--gold)">🪙 <b id="ui-gold">0</b></span>
       </div>
+      <div style="font-size:12px; text-align:center; color:#888; margin-bottom:10px" id="ui-nick">...</div>
       
       <div style="margin-bottom:20px">
         <div class="bar-box"><div id="bar-hp" class="bar-fill c-hp"></div></div>
@@ -304,29 +310,57 @@ const Ranking = {
         </div>`;
     });
     html += `</div>`;
-    html += `<div style="margin-top:20px; border-top:1px solid #444; padding-top:15px; display:flex; gap:10px">
-      <input type="text" id="rank-name" maxlength="12" placeholder="Seu Nome" value="${State.p.name}" style="background:#111; color:#fff; border:1px solid #555; padding:12px; flex:1; border-radius:8px">
-      <button class="btn" style="background:var(--xp)" onclick="Ranking.save()">Salvar</button>
-    </div>`;
     ct.innerHTML = html;
   },
-  save: async () => {
-    const nick = document.getElementById('rank-name').value || "Unknown";
-    State.p.name = nick; Core.save();
+  // Salva automaticamente se silent=true, ou com alerta se false
+  save: async (silent = false) => {
+    const nick = State.p.name;
+    if(nick === 'Herói') return; // Não salva sem nome
+    
     if(db) {
       try {
+        // Simplesmente adiciona um novo registro (histórico)
+        // Em um app real, faríamos 'set' com ID do usuário
         await db.collection("scores").add({ name: nick, lvl: State.p.lvl, gold: State.p.gold, date: new Date() });
-        alert("Salvo no Ranking!"); Ranking.open();
-      } catch(e) { alert("Erro de conexão."); }
-    } else alert("Salvo (Offline).");
+        if(!silent) { alert("Salvo no Ranking!"); Ranking.open(); }
+      } catch(e) { if(!silent) alert("Erro de conexão."); }
+    } else if(!silent) alert("Salvo (Offline).");
   }
 };
 
-// --- DADOS (EXPANDIDO) ---
+// --- SAVE SYSTEM (SLOTS) ---
+const SaveSystem = {
+  slots: [null, null, null, null],
+  activeSlot: -1,
+  
+  init: () => {
+    const s = localStorage.getItem('rpg_slots_v135');
+    if(s) SaveSystem.slots = JSON.parse(s);
+  },
+  
+  saveCurrent: () => {
+    if(SaveSystem.activeSlot > -1) {
+      SaveSystem.slots[SaveSystem.activeSlot] = State;
+      localStorage.setItem('rpg_slots_v135', JSON.stringify(SaveSystem.slots));
+      // Auto-update rank on save
+      Ranking.save(true);
+    }
+  },
+  
+  deleteSlot: (idx) => {
+    if(confirm('Apagar personagem?')) {
+      SaveSystem.slots[idx] = null;
+      localStorage.setItem('rpg_slots_v135', JSON.stringify(SaveSystem.slots));
+      UI.renderSlots();
+    }
+  }
+};
+
+// --- DADOS ---
 const DB = {
   classes: {
     warrior: { name:'Guerreiro', e:'⚔️', hp:150, mp:20, str:4, agi:2, int:1, desc:'Resistente.' },
-    rogue:   { name:'Ladino',    e:'🗡️', hp:110, mp:40, str:2, agi:5, int:2, desc:'Muito Rápido.' },
+    archer:  { name:'Arqueiro',  e:'🏹', hp:110, mp:40, str:2, agi:5, int:2, desc:'Preciso e Rápido.' }, // Change: Rogue -> Archer
     mage:    { name:'Mago',      e:'🔮', hp:80,  mp:100,str:1, agi:2, int:5, desc:'Mágico.' },
     paladin: { name:'Paladino',  e:'🛡️', hp:140, mp:50, str:3, agi:1, int:3, desc:'Defensivo.' }
   },
@@ -344,7 +378,6 @@ const DB = {
     void:      { name:'O Vazio',    e:'🌌', lvl:70, theme:'void',    type:'combat', mobs:['shadow','voidking'], desc:'FIM DE JOGO' }
   },
   mobs: {
-    // Basic
     rat:    { name:'Rato',      e:'🐀', hp:30,  agi:1, atk:5,  xp:10,  gold:5 },
     wolf:   { name:'Lobo',      e:'🐺', hp:50,  agi:3, atk:8,  xp:20,  gold:10 },
     thief:  { name:'Bandido',   e:'🥷', hp:60,  agi:5, atk:10, xp:30,  gold:18 },
@@ -357,28 +390,21 @@ const DB = {
     imp:    { name:'Diabrete',  e:'👿', hp:140, agi:10,atk:28, xp:160, gold:65 },
     golem:  { name:'Golem',     e:'🗿', hp:300, agi:1, atk:40, xp:250, gold:120 },
     dragon: { name:'Dragão',    e:'🐉', hp:400, agi:8, atk:55, xp:500, gold:400, boss:true },
-    
-    // Expanded
     penguin:{ name:'Pinguim',   e:'🐧', hp:200, agi:4, atk:35, xp:300, gold:150 },
     bear:   { name:'Urso Polar',e:'🐻', hp:450, agi:3, atk:50, xp:450, gold:200 },
     yeti:   { name:'Yeti',      e:'🦍', hp:600, agi:2, atk:70, xp:600, gold:300 },
-    
     snake:  { name:'Naja',      e:'🐍', hp:300, agi:12,atk:50, xp:500, gold:250 },
     mummy:  { name:'Múmia',     e:'🤕', hp:600, agi:4, atk:60, xp:700, gold:350 },
     sphinx: { name:'Esfinge',   e:'🐈', hp:900, agi:10,atk:80, xp:1000,gold:500, boss:true },
-    
     shark:  { name:'Tubarão',   e:'🦈', hp:800, agi:11,atk:70, xp:900, gold:450 },
     siren:  { name:'Sereia',    e:'🧜', hp:700, agi:14,atk:75, xp:1100,gold:550 },
     kraken: { name:'Kraken',    e:'🦑', hp:1500,agi:8, atk:100,xp:2000,gold:1000, boss:true },
-    
     harpy:  { name:'Harpia',    e:'🦅', hp:900, agi:16,atk:90, xp:1300,gold:600 },
     angel:  { name:'Anjo',      e:'👼', hp:1200,agi:13,atk:110,xp:1600,gold:800 },
     zeus:   { name:'Deus',      e:'⚡', hp:2500,agi:15,atk:150,xp:3000,gold:2000, boss:true },
-    
     demon:  { name:'Demônio',   e:'👺', hp:1400,agi:14,atk:130,xp:2000,gold:900 },
     cerberus:{name:'Cerberus',  e:'🐕', hp:2000,agi:12,atk:160,xp:2500,gold:1200 },
     lucifer:{ name:'Lúcifer',   e:'😈', hp:4000,agi:18,atk:200,xp:5000,gold:5000, boss:true },
-
     shadow: { name:'Sombra',    e:'👤', hp:3000, agi:15,atk:180,xp:4000, gold:2500 },
     voidking:{name:'Rei Vazio', e:'👑', hp:6666,agi:12,atk:300, xp:9999,gold:9999, boss:true }
   },
@@ -393,13 +419,13 @@ const DB = {
   gear: {
     weapons: {
       warrior: [{n:'Punhos',v:1,x:3},{n:'Espada Velha',v:5,x:8,c:100,st:{str:1}},{n:'Espada Ferro',v:10,x:15,c:350,st:{str:2}},{n:'Montante',v:15,x:25,c:900,st:{str:4}},{n:'Matadora',v:25,x:40,c:2500,st:{str:6}},{n:'Excalibur',v:50,x:70,c:8000,st:{str:10}},{n:'Lâmina Gelo',v:80,x:100,c:15000,st:{str:15}},{n:'Espada Divina',v:120,x:150,c:30000,st:{str:20}},{n:'Ragnarok',v:200,x:300,c:99999,st:{str:30}}],
-      rogue:   [{n:'Punhos',v:1,x:3},{n:'Adaga Cega',v:4,x:7,c:100,st:{agi:1}},{n:'Adaga Dupla',v:8,x:14,c:350,st:{agi:2}},{n:'Lâmina Sombra',v:12,x:22,c:900,st:{agi:4}},{n:'Presa Veneno',v:20,x:35,c:2500,st:{agi:6}},{n:'Fim dos Dias',v:45,x:65,c:8000,st:{agi:10}},{n:'Garras Urso',v:70,x:90,c:15000,st:{agi:15}},{n:'Adaga Luz',v:110,x:140,c:30000,st:{agi:20}},{n:'Ceifadora',v:190,x:280,c:99999,st:{agi:30}}],
+      archer:  [{n:'Punhos',v:1,x:3},{n:'Arco Curto',v:4,x:7,c:100,st:{agi:1}},{n:'Arco Longo',v:8,x:14,c:350,st:{agi:2}},{n:'Besta',v:12,x:22,c:900,st:{agi:4}},{n:'Arco Composto',v:20,x:35,c:2500,st:{agi:6}},{n:'Atravessador',v:45,x:65,c:8000,st:{agi:10}},{n:'Arco Élfico',v:70,x:90,c:15000,st:{agi:15}},{n:'Arco Luz',v:110,x:140,c:30000,st:{agi:20}},{n:'Matador de Deus',v:190,x:280,c:99999,st:{agi:30}}],
       mage:    [{n:'Mãos',v:1,x:3},{n:'Varinha Pau',v:4,x:8,c:100,st:{int:1}},{n:'Cajado Aprendiz',v:8,x:14,c:350,st:{int:2}},{n:'Cajado Rúnico',v:14,x:24,c:900,st:{int:4}},{n:'Cetro Vazio',v:22,x:38,c:2500,st:{int:6}},{n:'Cosmos',v:48,x:68,c:8000,st:{int:10}},{n:'Cajado Gelo',v:75,x:95,c:15000,st:{int:15}},{n:'Cetro Anjo',v:115,x:145,c:30000,st:{int:20}},{n:'Apocalipse',v:210,x:310,c:99999,st:{int:30}}],
       paladin: [{n:'Punhos',v:1,x:3},{n:'Maça Madeira',v:4,x:7,c:100,st:{str:1}},{n:'Martelo Ferro',v:9,x:14,c:350,st:{str:2}},{n:'Mangual',v:13,x:23,c:900,st:{str:4}},{n:'Martelo Luz',v:23,x:38,c:2500,st:{str:6}},{n:'Mjolnir',v:48,x:68,c:8000,st:{str:10}},{n:'Estrela Manhã',v:75,x:100,c:15000,st:{str:15}},{n:'Justiça',v:115,x:150,c:30000,st:{str:20}},{n:'Deus Ex',v:200,x:300,c:99999,st:{str:30}}]
     },
     armors: {
       warrior: [{n:'Camisa',v:0},{n:'Couro Batido',v:3,c:100},{n:'Cota Malha',v:7,c:350},{n:'Peitoral Aço',v:14,c:900},{n:'Placas Dragão',v:22,c:2500},{n:'Armadura Deus',v:35,c:8000},{n:'Gelo Eterno',v:50,c:15000},{n:'Placas Sol',v:70,c:30000},{n:'Caos Absoluto',v:100,c:99999}],
-      rogue:   [{n:'Camisa',v:0},{n:'Capa Viagem',v:2,c:100},{n:'Couro Fino',v:6,c:350},{n:'Manto Sombra',v:12,c:900},{n:'Traje Ninja',v:20,c:2500},{n:'Vulto',v:32,c:8000},{n:'Pele Yeti',v:45,c:15000},{n:'Vento Divino',v:65,c:30000},{n:'Sombra Eterna',v:95,c:99999}],
+      archer:  [{n:'Camisa',v:0},{n:'Túnica Verde',v:2,c:100},{n:'Couro Fino',v:6,c:350},{n:'Manto Caçador',v:12,c:900},{n:'Traje Camuflado',v:20,c:2500},{n:'Vulto',v:32,c:8000},{n:'Pele Yeti',v:45,c:15000},{n:'Vento Divino',v:65,c:30000},{n:'Sombra Eterna',v:95,c:99999}],
       mage:    [{n:'Camisa',v:0},{n:'Túnica Velha',v:1,c:100},{n:'Robe Aprendiz',v:5,c:350},{n:'Manto Arcano',v:10,c:900},{n:'Toga Estelar',v:18,c:2500},{n:'Tecido Tempo',v:30,c:8000},{n:'Manto Nevasca',v:42,c:15000},{n:'Aura Santa',v:60,c:30000},{n:'Vazio Puro',v:90,c:99999}],
       paladin: [{n:'Camisa',v:0},{n:'Gibão',v:3,c:100},{n:'Escudo Torre',v:8,c:350},{n:'Armadura Bento',v:15,c:900},{n:'Placas Luz',v:24,c:2500},{n:'Égide',v:38,c:8000},{n:'Parede Gelo',v:55,c:15000},{n:'Escudo Fé',v:75,c:30000},{n:'Imortalidade',v:110,c:99999}]
     }
@@ -437,7 +463,7 @@ const DB = {
   ],
   skills: {
     bash: { name:'Golpe', cost:5, bonus:5, dice:8 },
-    stab: { name:'Furar', cost:5, bonus:3, dice:10 },
+    shot: { name:'Disparo', cost:5, bonus:3, dice:10 }, // Changed from stab to shot
     fire: { name:'Fogo',  cost:10, bonus:8, dice:20 },
     heal: { name:'Cura',  cost:12, val:50, type:'heal' }
   },
@@ -473,29 +499,26 @@ const getStats = () => {
   const p = State.p;
   let s = { str:p.str, agi:p.agi, int:p.int };
   
-  // Mount Bonus
   if(p.mount && DB.mounts[p.mount]) {
     const m = DB.mounts[p.mount];
     s.str += (m.str||0); s.agi += (m.agi||0); s.int += (m.int||0);
   }
 
-  // Weapon Bonus (Novo)
   const g = getGear();
   if(g.w.st) {
     if(g.w.st.str) s.str += g.w.st.str;
     if(g.w.st.agi) s.agi += g.w.st.agi;
     if(g.w.st.int) s.int += g.w.st.int;
   }
-  
   return s;
 };
 
 // --- LOGICA DE REFLEXO ---
 const Duel = {
-  state: 'closed', // closed, wait, go, result
+  state: 'closed',
   timer: null,
   startTimestamp: 0,
-  action: null, // {type, skKey}
+  action: null,
 
   start: (type, skKey) => {
     Duel.action = {type, skKey};
@@ -510,12 +533,8 @@ const Duel = {
     msg.innerText = "ESPERE...";
     msg.style.color = "#fff";
     
-    // --- TEMPO MAIS RÁPIDO APLICADO AQUI ---
-    const delay = Dice.roll(500, 1500); // 0.5s a 1.5s
-    
-    Duel.timer = setTimeout(() => {
-      Duel.go();
-    }, delay);
+    const delay = Dice.roll(500, 1500);
+    Duel.timer = setTimeout(() => { Duel.go(); }, delay);
   },
 
   go: () => {
@@ -525,19 +544,17 @@ const Duel = {
     
     const light = document.getElementById('reflex-light');
     const msg = document.getElementById('reflex-msg');
-    
     light.className = 'reflex-light go';
     msg.innerText = "AGORA!";
     msg.style.color = "#22c55e";
 
-    // Auto fail if user sleeps
     Duel.timer = setTimeout(() => {
       if(Duel.state === 'go') Duel.resolve(false, 'slow');
     }, 2000); 
   },
 
   tap: (e) => {
-    if(e) e.preventDefault(); // prevent double firing
+    if(e) e.preventDefault();
     if(Duel.state === 'wait') {
       clearTimeout(Duel.timer);
       Duel.resolve(false, 'early');
@@ -551,12 +568,8 @@ const Duel = {
     Duel.state = 'result';
     const msg = document.getElementById('reflex-msg');
     const reactTime = Date.now() - Duel.startTimestamp;
-    
     const pAgi = getStats().agi;
     const eAgi = State.combat.e.agi;
-    
-    // CALCULO DA JANELA DE TEMPO (O segredo do balanceamento)
-    // Base 800ms. -20ms por Agi Inimigo. +10ms por Agi Player.
     let allowedTime = Math.max(200, 800 - (eAgi * 25) + (pAgi * 10));
     
     if(reason === 'early') {
@@ -570,7 +583,6 @@ const Duel = {
       setTimeout(() => Core.finishTurn(false, 'slow'), 800);
     }
     else {
-      // Hit logic check
       if(reactTime <= allowedTime) {
         msg.innerText = `${reactTime}ms (BOM!)`;
         msg.style.color = "#22c55e";
@@ -600,6 +612,7 @@ const UI = {
     document.getElementById('ui-lvl').innerText = p.lvl;
     document.getElementById('ui-gold').innerText = p.gold;
     document.getElementById('ui-class').innerText = c ? c.name : '';
+    document.getElementById('ui-nick').innerText = p.name || 'Herói';
     
     document.getElementById('val-str').innerText = stats.str;
     document.getElementById('val-agi').innerText = stats.agi;
@@ -636,7 +649,6 @@ const UI = {
     const refineTxt = p.refineW > 0 ? ` <span class="refine-level">+${p.refineW}</span>` : '';
     document.getElementById('ui-wpn-name').innerHTML = g.w.n + refineTxt;
     
-    // Mostra dano total (base + refine)
     let dmgMin = g.w.v + (p.refineW * 2);
     let dmgMax = g.w.x + (p.refineW * 3);
     document.getElementById('ui-wpn-dmg').innerText = `${dmgMin}-${dmgMax}`;
@@ -668,6 +680,34 @@ const UI = {
     });
   },
 
+  renderSlots: () => {
+    const ct = document.getElementById('modal-content');
+    ct.innerHTML = '';
+    
+    SaveSystem.slots.forEach((s, i) => {
+      let content = `<b>Vazio</b><br><small>Toque para criar</small>`;
+      let cls = 'slot-card';
+      if(s) {
+        content = `<b>${s.p.name}</b> (Lvl ${s.p.lvl})<br>
+        <span style="font-size:24px">${DB.classes[s.p.class].e}</span> ${DB.classes[s.p.class].name} <small style="float:right;color:#666">X</small>`;
+        cls += ' filled';
+      }
+      
+      const div = document.createElement('div');
+      div.className = cls;
+      div.innerHTML = content;
+      div.onclick = (e) => {
+        // Simple delete logic zone (right side)
+        if(s && e.offsetX > e.target.offsetWidth - 40) {
+           SaveSystem.deleteSlot(i);
+        } else {
+           Core.selectSlot(i);
+        }
+      };
+      ct.appendChild(div);
+    });
+  },
+
   log: (msg, type='') => {
     const box = document.getElementById('ui-log');
     const div = document.createElement('div');
@@ -696,8 +736,22 @@ const UI = {
     document.getElementById('modal-overlay').style.display = 'flex';
     ct.innerHTML = '';
     
-    if(type === 'class') {
-      tt.innerText = 'Classe';
+    if(type === 'slots') {
+      tt.innerText = 'Personagens';
+      UI.renderSlots();
+    }
+    else if(type === 'name_input') {
+      tt.innerText = 'Novo Herói';
+      ct.innerHTML = `
+        <div style="text-align:center">
+          <p>Como você se chama?</p>
+          <input type="text" id="new-char-name" placeholder="Nome" maxlength="12" style="background:#111; color:#fff; border:1px solid #555; padding:15px; font-size:18px; border-radius:8px; width:100%; margin-bottom:20px">
+          <button class="btn btn-big" onclick="Core.confirmName()">Continuar</button>
+        </div>
+      `;
+    }
+    else if(type === 'class') {
+      tt.innerText = 'Escolha a Classe';
       for(let k in DB.classes) {
         const c = DB.classes[k];
         ct.innerHTML += `<div class="card-item" onclick="Core.setClass('${k}')">
@@ -718,7 +772,6 @@ const UI = {
     }
     else if(type === 'inv') {
       tt.innerText = 'Mochila';
-      // Itens normais
       for(let k in State.p.inv) {
         if(State.p.inv[k]>0 && k !== 'shard') {
           const it = DB.items[k];
@@ -727,13 +780,11 @@ const UI = {
           </div>`;
         }
       }
-      // Fragmentos (não usáveis diretamente)
       if(State.p.inv.shard > 0) {
         ct.innerHTML += `<div class="card-item" style="cursor:default; border:1px solid #555">
            <span>💎 Fragmento (x${State.p.inv.shard})</span> <small>Refino</small>
         </div>`;
       }
-
       if(!ct.innerHTML) ct.innerHTML = '<div style="text-align:center;color:#666">Vazio.</div>';
     }
     else if(type === 'reward') {
@@ -777,25 +828,62 @@ const UI = {
 
 const Core = {
   init: () => {
-    const s = localStorage.getItem('rpg_v13_alchemy');
-    if(s) { 
-      State = JSON.parse(s); 
-      // Fix save migration if needed
+    SaveSystem.init();
+    UI.openModal('slots'); // Start at slots screen
+  },
+  
+  selectSlot: (idx) => {
+    SaveSystem.activeSlot = idx;
+    const save = SaveSystem.slots[idx];
+    
+    if(save) {
+      State = save;
+      // Compatiblity fixes
       if(!State.p.refineW) State.p.refineW = 0;
-      Core.travel(State.loc); UI.log('Retornou.'); 
-    } 
-    else { UI.openModal('class'); }
+      if(State.p.class === 'rogue') State.p.class = 'archer'; // Fix class change
+      
+      UI.closeModal();
+      Core.travel(State.loc);
+      UI.render();
+      Ranking.save(true); // Auto update rank on load
+    } else {
+      // Create new character
+      State = {
+        p: { name:'', class:null, lvl:1, xp:0, gold:0, hp:100, mp:50, maxHp:100, maxMp:50, wpn:0, arm:0, inv:{}, str:1, agi:1, int:1, points:0, mount:null, refineW:0 },
+        loc: 'town',
+        combat: null,
+        q: {}
+      };
+      UI.openModal('name_input');
+    }
+  },
+  
+  confirmName: () => {
+    const nameInput = document.getElementById('new-char-name');
+    let name = nameInput.value.trim();
+    if(!name) name = "Herói";
+    State.p.name = name;
+    UI.openModal('class');
+  },
+  
+  save: () => { 
+    SaveSystem.saveCurrent();
     UI.render();
   },
-  save: () => { localStorage.setItem('rpg_v13_alchemy', JSON.stringify(State)); UI.render(); },
-  resetGame: () => { if(confirm('Resetar?')){ localStorage.removeItem('rpg_v13_alchemy'); location.reload(); } },
+  
+  resetGame: () => { if(confirm('Sair para o Menu?')){ location.reload(); } },
+  exitToMenu: () => { Core.save(); location.reload(); },
 
   setClass: (k) => {
     const c = DB.classes[k];
     State.p.class = k;
     Object.assign(State.p, { maxHp:c.hp, hp:c.hp, maxMp:c.mp, mp:c.mp, str:c.str, agi:c.agi, int:c.int, mount:null, wpn:0, arm:0, refineW:0 });
     State.p.inv = { pot:3, shard:0 };
-    UI.closeModal(); Core.travel('town');
+    UI.closeModal(); 
+    Core.travel('town');
+    // Save immediately after creation
+    Core.save();
+    Ranking.save(true); // Rank registration
   },
 
   addStat: (stat) => {
@@ -867,7 +955,7 @@ const Core = {
   renderBtns: (disabled) => {
     const area = document.getElementById('ui-actions');
     let sk = 'bash';
-    if(State.p.class === 'rogue') sk = 'stab';
+    if(State.p.class === 'archer') sk = 'shot'; // Archer skill
     if(State.p.class === 'mage') sk = 'fire';
     if(State.p.class === 'paladin') sk = 'heal';
     const sData = DB.skills[sk];
@@ -883,13 +971,9 @@ const Core = {
   act: (type, skKey) => {
     if(!State.combat) return;
     const p = State.p;
-    
-    // Check mana first
     if(type === 'skill') {
       if(p.mp < DB.skills[skKey].cost) { UI.log('Sem mana!'); return; }
     }
-    
-    // Start Reflex Duel
     Duel.start(type, skKey);
   },
 
@@ -904,7 +988,8 @@ const Core = {
     if(playerWin) {
       if(action.type === 'atk') {
         let attr = p.class === 'mage' ? stats.int : stats.str;
-        // Refinement Bonus Calculation (+2 Min Damage, +3 Max Damage per level)
+        if(p.class === 'archer') attr = stats.agi; // Archer uses AGI for ATK
+        
         let minDmg = gear.w.v + (p.refineW * 2);
         let maxDmg = gear.w.x + (p.refineW * 3);
         
@@ -923,17 +1008,19 @@ const Core = {
           UI.log(`Cura: ${heal}`);
           UI.fxFloat('❤','crit');
         } else {
-          let base = Dice.roll(1, s.dice) + s.bonus + (stats.int * 2);
+          let base = Dice.roll(1, s.dice) + s.bonus;
+          if(p.class === 'mage') base += (stats.int * 2);
+          if(p.class === 'archer') base += (stats.agi * 1.5);
+          else base += (stats.str);
+
           e.hp -= base;
-          UI.log(`Magia: <b>${base}</b>`);
+          UI.log(`Skill: <b>${base}</b>`);
           UI.fxFloat(base,'var(--mp)');
         }
       }
     } else {
-      // Enemy Turn
       let txt = reason === 'early' ? 'Queimou!' : 'Lento demais!';
       UI.log(txt, 'hp');
-      
       const armor = gear.a.v;
       let dmg = Math.max(0, (e.atk + Dice.roll(-2, 2)) - armor);
       if(reason === 'early') dmg = Math.floor(dmg * 1.5);
@@ -958,14 +1045,12 @@ const Core = {
     State.p.gold += e.gold;
     State.p.xp += e.xp;
     
-    // DROP SYSTEM (Fragmentos)
-    if(Math.random() < 0.4) { // 40% chance
+    if(Math.random() < 0.4) { 
       State.p.inv.shard = (State.p.inv.shard || 0) + 1;
       UI.log('Drop: Fragmento', 'crit');
       UI.fxFloat('💎', 'crit');
     }
     
-    // Checa missões
     let key = Object.keys(DB.mobs).find(k => DB.mobs[k].name === e.name);
     if(key && State.q[key] !== 'done') {
       State.q[key] = (State.q[key]||0) + 1;
@@ -984,6 +1069,7 @@ const Core = {
       State.p.hp = State.p.maxHp;
       UI.log(`Level UP!`, 'crit');
       UI.fxFloat('UP!','crit');
+      Ranking.save(true); // Auto save rank on level up
     }
 
     State.combat = null;
@@ -1006,7 +1092,7 @@ const Core = {
       p.refineW++;
       UI.log(`Arma refinada para +${p.refineW}!`, 'crit');
       Core.save();
-      UI.openModal('alchemist'); // refresh
+      UI.openModal('alchemist');
     } else {
       UI.log('Recursos insuficientes.');
     }
@@ -1118,7 +1204,7 @@ const Core = {
         p.gold -= it.c;
         if(type==='wpn') { 
           p.wpn++; 
-          p.refineW = 0; // Reset refino ao comprar arma nova
+          p.refineW = 0;
           UI.log('Arma nova! Refino resetado.');
         } else { 
           p.arm++; 
