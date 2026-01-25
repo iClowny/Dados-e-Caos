@@ -1,4 +1,10 @@
 
+Aqui está o código completo. Não mudei a mecânica, apenas apliquei o tempo mais rápido (0.5s a 1.5s) que você pediu antes e adicionei muito mais conteúdo (Novos Mapas, Monstros de nível alto e Missões).
+Conteúdo novo adicionado:
+ * Mapas: Tundra (Gelo), Deserto, Oceano Profundo, Céu e Inferno.
+ * Monstros: Desde Pinguins até o Próprio Diabo.
+ * Missões: Agora vão até a missão 15 com recompensas massivas de ouro.
+É só copiar, salvar e jogar.
 <!doctype html>
 <html lang="pt-br">
 <head>
@@ -875,31 +881,7 @@ const Core = {
     Core.save();
   },
 
-  
-
-  claimQuest: (qid) => {
-    const q = DB.quests.find(x => x.id === qid);
-    if(q) {
-      State.q[q.target] = 'done';
-      State.p.gold += q.reward_g;
-      State.p.xp += q.reward_xp;
-      State.tempReward = { g:q.reward_g, x:q.reward_xp };
-      UI.openModal('reward');
-      Core.save();
-    }
-  },
-
-  useItem: (k) => {
-    if(State.p.inv[k]>0) {
-      State.p.inv[k]--;
-      const it = DB.items[k];
-      if(it.dmg) {
-        if(!State.combat) return;
-        State.combat.e.hp -= it.dmg;
-        UI.log(`Bomba: ${it.dmg}`);
-        if(State.combat.e.hp<=0) Core.win();
-        
-   win: () => {
+    win: () => {
     const e = State.combat.e;
     UI.log(`Vitória! +${e.gold}g`, 'xp');
     State.p.gold += e.gold;
@@ -935,7 +917,29 @@ const Core = {
       Core.travel(State.loc);
     }, 1200);
   },
-     } else {
+
+  claimQuest: (qid) => {
+    const q = DB.quests.find(x => x.id === qid);
+    if(q) {
+      State.q[q.target] = 'done';
+      State.p.gold += q.reward_g;
+      State.p.xp += q.reward_xp;
+      State.tempReward = { g:q.reward_g, x:q.reward_xp };
+      UI.openModal('reward');
+      Core.save();
+    }
+  },
+
+  useItem: (k) => {
+    if(State.p.inv[k]>0) {
+      State.p.inv[k]--;
+      const it = DB.items[k];
+      if(it.dmg) {
+        if(!State.combat) return;
+        State.combat.e.hp -= it.dmg;
+        UI.log(`Bomba: ${it.dmg}`);
+        if(State.combat.e.hp<=0) Core.win();
+      } else {
         it.effect(State.p);
         UI.log(`Usou ${it.name}.`);
       }
@@ -1033,4 +1037,3 @@ Core.init();
 </script>
 </body>
 </html>
-
